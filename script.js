@@ -299,6 +299,76 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { threshold: 0.5 });
 
     stats.forEach(stat => statsObserver.observe(stat));
+
+    // Portfolio Carousel
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.dot');
+    let slideInterval;
+
+    function showSlide(index) {
+        // Hide all slides
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        // Show current slide
+        if (slides[index]) {
+            slides[index].classList.add('active');
+        }
+        if (dots[index]) {
+            dots[index].classList.add('active');
+        }
+    }
+
+    function nextSlide() {
+        currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+        showSlide(currentSlideIndex);
+    }
+
+    function prevSlide() {
+        currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+        showSlide(currentSlideIndex);
+    }
+
+    function startAutoSlide() {
+        slideInterval = setInterval(nextSlide, 7000); // 7 seconds
+    }
+
+    function stopAutoSlide() {
+        clearInterval(slideInterval);
+    }
+
+    // Start auto-slide
+    if (slides.length > 0) {
+        startAutoSlide();
+        
+        // Pause on hover
+        const carousel = document.querySelector('.portfolio-carousel');
+        if (carousel) {
+            carousel.addEventListener('mouseenter', stopAutoSlide);
+            carousel.addEventListener('mouseleave', startAutoSlide);
+        }
+    }
+
+    // Make carousel functions global
+    window.changeSlide = function(direction) {
+        if (direction > 0) {
+            nextSlide();
+        } else {
+            prevSlide();
+        }
+        // Reset timer
+        stopAutoSlide();
+        startAutoSlide();
+    };
+
+    window.currentSlide = function(index) {
+        currentSlideIndex = index - 1;
+        showSlide(currentSlideIndex);
+        // Reset timer
+        stopAutoSlide();
+        startAutoSlide();
+    };
 });
 
 // Add hamburger menu animation styles
