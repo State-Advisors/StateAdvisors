@@ -214,34 +214,143 @@ body {
 
 .hero-visual {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 350px;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.hero-visual i {
-    font-size: 8rem;
-    color: rgba(255, 255, 255, 0.3);
+.torn-bill {
+    position: relative;
+    width: 280px;
+    height: 350px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: rotate(-5deg);
+    animation: float 3s ease-in-out infinite;
+}
+
+.torn-bill::before {
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.solar-panels {
-    position: absolute;
-    top: 20%;
-    left: 20%;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.panel {
-    width: 60px;
-    height: 40px;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
     background: linear-gradient(45deg, #fbbf24, #f59e0b);
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.bill-content {
+    padding: 1.5rem;
+    height: 60%;
+    background: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.bill-header h4 {
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.bill-amount {
+    color: #ef4444;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.bill-details {
+    margin-bottom: 1rem;
+}
+
+.bill-details p {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin: 0.25rem 0;
+}
+
+.bill-footer {
+    text-align: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.bill-footer p {
+    color: #ef4444;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.tear-line {
+    position: absolute;
+    top: 60%;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 5px,
+        #e5e7eb 5px,
+        #e5e7eb 10px
+    );
+    z-index: 2;
+}
+
+.bill-half {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.savings-highlight {
+    color: white;
+}
+
+.savings-text {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.solar-text {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: rotate(-5deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(-5deg) translateY(-10px);
+    }
 }
 
 /* Commercial Focus Section */
