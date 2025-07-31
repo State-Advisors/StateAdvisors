@@ -417,6 +417,14 @@ body {
     transform: scaleX(1);
 }
 
+.benefit-card[data-interest] {
+    cursor: pointer;
+}
+
+.benefit-card[data-interest]:hover {
+    transform: translateY(-8px) scale(1.02);
+}
+
 .benefit-icon {
     width: 60px;
     height: 60px;
@@ -441,6 +449,79 @@ body {
 }
 
 .benefit-card p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Full Business Approach Section */
+.business-approach {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.approach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.approach-item {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s ease;
+    border: 1px solid rgba(37, 99, 235, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.approach-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #059669);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.approach-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.approach-item:hover::before {
+    transform: scaleX(1);
+}
+
+.approach-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.approach-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.approach-item h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+.approach-item p {
     color: #64748b;
     line-height: 1.6;
 }

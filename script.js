@@ -58,6 +58,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Benefit card click functionality
+    const benefitCards = document.querySelectorAll('.benefit-card[data-interest]');
+    benefitCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const interest = this.getAttribute('data-interest');
+            const messageTextarea = document.getElementById('message');
+            
+            if (messageTextarea) {
+                // Auto-populate the message field
+                messageTextarea.value = `I'm interested in: ${interest}\n\n`;
+                messageTextarea.focus();
+                
+                // Update character counter
+                const charCounter = document.getElementById('char-count');
+                if (charCounter) {
+                    charCounter.textContent = messageTextarea.value.length;
+                }
+                
+                // Scroll to contact form
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                    contactSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+
     // Form handling
     const solarForm = document.getElementById('solar-form');
     if (solarForm) {
