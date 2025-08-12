@@ -2069,7 +2069,7 @@ html {
     }
 
     .legend-color.solar {
-        background: #f59e0b;
+        background: #10b981;
     }
 
     .legend-color.consumption {
@@ -2184,12 +2184,14 @@ html {
     }
 
     .chart-container {
-        height: 200px;
+        height: 250px;
         display: flex;
         align-items: center;
         justify-content: center;
         background: rgba(255, 255, 255, 0.05);
         border-radius: 8px;
+        padding: 20px 40px 40px 60px; /* Add padding for labels */
+        position: relative;
     }
 
     .chart-container canvas {

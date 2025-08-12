@@ -783,12 +783,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const width = canvas.width;
         const height = canvas.height;
         
+        // Account for padding in chart area
+        const chartPadding = { left: 60, right: 40, top: 20, bottom: 40 };
+        const chartWidth = width - chartPadding.left - chartPadding.right;
+        const chartHeight = height - chartPadding.top - chartPadding.bottom;
+        
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
         
         // Get current NYC time
-        const now = new Date();
-        const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
         const currentHour = nycTime.getHours();
         
         // Update current time display
@@ -807,70 +810,89 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Vertical grid lines (hours)
         for (let i = 0; i <= 24; i++) {
-            const x = (i / 24) * width;
+            const x = chartPadding.left + (i / 24) * chartWidth;
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
+            ctx.moveTo(x, chartPadding.top);
+            ctx.lineTo(x, height - chartPadding.bottom);
             ctx.stroke();
         }
         
         // Horizontal grid lines (kW)
         for (let i = 0; i <= 10; i++) {
-            const y = (i / 10) * height;
+            const y = chartPadding.top + (i / 10) * chartHeight;
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
+            ctx.moveTo(chartPadding.left, y);
+            ctx.lineTo(width - chartPadding.right, y);
             ctx.stroke();
         }
         
-        // Draw hour labels (below the chart)
+        // Draw hour labels (below the chart) - moved outside chart boundaries
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         for (let i = 0; i <= 24; i += 3) {
-            const x = (i / 24) * width;
+            const x = chartPadding.left + (i / 24) * chartWidth;
             const timeLabel = i === 0 ? '12AM' : i === 12 ? '12PM' : i > 12 ? `${i-12}PM` : `${i}AM`;
-            ctx.fillText(timeLabel, x, height + 20);
+            ctx.fillText(timeLabel, x, height - 10);
         }
         
-        // Draw kWh labels (max 45 kWh) - outside chart boundaries
+        // Draw kWh labels (max 45 kWh) - moved outside chart boundaries with proper spacing
         ctx.textAlign = 'right';
-        for (let i = 0; i <= 9; i += 1) {
-            const y = (i / 9) * height;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        // Show 45 kWh at top
+        ctx.fillText('45 kWh', chartPadding.left - 10, chartPadding.top + 15);
+        // Show 0 kWh at bottom
+        ctx.fillText('0 kWh', chartPadding.left - 10, height - chartPadding.bottom + 15);
+        // Show middle values
+        for (let i = 1; i <= 8; i += 1) {
+            const y = chartPadding.top + (i / 9) * chartHeight;
             const kwhLabel = Math.round((9 - i) * 5) + ' kWh';
-            ctx.fillText(kwhLabel, 50, y + 4);
+            ctx.fillText(kwhLabel, chartPadding.left - 10, y + 4);
         }
         
-        // Solar Production Data (Higher production 10AM-4PM, smoother curve)
+        // Date-based seed for consistent randomization
+        const now = new Date();
+        const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+        const dateSeed = nycTime.getFullYear() * 10000 + (nycTime.getMonth() + 1) * 100 + nycTime.getDate();
+        
+        // Solar Production Data (Date-seeded randomization)
         const solarData = [];
         for (let hour = 0; hour < 24; hour++) {
             let production = 0;
             if (hour >= 6 && hour <= 20) {
                 const peakHour = 12;
                 const distanceFromPeak = Math.abs(hour - peakHour);
-                let maxProduction = 35; // kWh (max 45 kWh)
+                let maxProduction = 32; // Reduced from 35 for smoother curve
                 
                 // Higher production during 10AM-4PM
                 if (hour >= 10 && hour <= 16) {
-                    maxProduction = 42; // Higher peak during peak hours
+                    maxProduction = 38; // Reduced from 42 for smoother curve
                 }
                 
-                // Smoother curve with faster rise and more muted peak
-                production = maxProduction * Math.exp(-(distanceFromPeak * distanceFromPeak) / 12);
+                // Smoother curve with more gradual rise and fall
+                production = maxProduction * Math.exp(-(distanceFromPeak * distanceFromPeak) / 15); // Increased from 12 for smoother curve
                 
-                // Faster rise in morning
+                // More gradual rise in morning
                 if (hour < 12) {
-                    production *= (1 + (hour - 6) * 0.1);
+                    production *= (1 + (hour - 6) * 0.08); // Reduced from 0.1
                 }
-                // Slower fade in afternoon
+                // More gradual fade in afternoon
                 if (hour > 12) {
-                    production *= (1 - (hour - 12) * 0.05);
+                    production *= (1 - (hour - 12) * 0.04); // Reduced from 0.05
+                }
+                
+                // Add date-seeded randomness to middle hours (10AM-4PM)
+                if (hour >= 10 && hour <= 16) {
+                    const productionSeed = dateSeed + hour * 100; // Different seed for each hour
+                    const productionRandom = (productionSeed * 9301 + 49297) % 233280;
+                    const randomFactor = 0.9 + (productionRandom / 233280) * 0.2; // ±10% randomness
+                    production *= randomFactor;
                 }
             }
             solarData.push(production);
         }
         
-        // Consumption Data (Bell curve with peaks)
+        // Consumption Data (Bell curve with peaks and randomness)
         const consumptionData = [];
         for (let hour = 0; hour < 24; hour++) {
             let consumption = 0;
@@ -887,38 +909,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 consumption += 12 * Math.exp(-Math.pow(hour - 18.5, 2) / 2);
             }
             
+            // Add randomness to consumption (different seed than production)
+            const consumptionSeed = dateSeed + hour * 1000; // Different seed for consumption
+            const consumptionRandom = (consumptionSeed * 9301 + 49297) % 233280;
+            const consumptionRandomFactor = 0.85 + (consumptionRandom / 233280) * 0.3; // ±15% randomness
+            consumption *= consumptionRandomFactor;
+            
             consumptionData.push(consumption);
         }
         
         // Draw bars - side by side for each hour
-        const hourWidth = width / 24;
+        const hourWidth = chartWidth / 24;
         const barWidth = hourWidth / 2 - 2; // Two bars per hour, thinner
         
-        // Draw consumption bars (gold) and solar production (green) - both update with time
+        // Draw consumption bars (gold) and solar production (green) - only up to current hour
         for (let i = 0; i < 24; i++) {
-            const hourX = (i / 24) * width;
+            const hourX = chartPadding.left + (i / 24) * chartWidth;
             
-            // Gold consumption bar (left) - show all hours
-            ctx.fillStyle = '#f59e0b';
-            const consumption = consumptionData[i];
-            const consumptionHeight = (consumption / 45) * height; // Max 45 kWh
-            ctx.fillRect(hourX + 1, height - consumptionHeight, barWidth, consumptionHeight);
-            
-            // Green solar production bar (right) - only up to current hour
+            // Only show bars up to current hour
             if (i <= currentHour) {
+                // Gold consumption bar (left)
+                ctx.fillStyle = '#f59e0b';
+                const consumption = consumptionData[i];
+                const consumptionHeight = (consumption / 45) * chartHeight; // Max 45 kWh
+                ctx.fillRect(hourX + 1, height - chartPadding.bottom - consumptionHeight, barWidth, consumptionHeight);
+                
+                // Green solar production bar (right)
                 ctx.fillStyle = '#10b981';
                 const production = solarData[i];
-                const productionHeight = (production / 45) * height; // Max 45 kWh
-                ctx.fillRect(hourX + barWidth + 3, height - productionHeight, barWidth, productionHeight);
+                const productionHeight = (production / 45) * chartHeight; // Max 45 kWh
+                ctx.fillRect(hourX + barWidth + 3, height - chartPadding.bottom - productionHeight, barWidth, productionHeight);
             }
         }
         
         // Highlight current hour
         if (currentHour >= 0 && currentHour < 24) {
-            const hourX = (currentHour / 24) * width;
+            const hourX = chartPadding.left + (currentHour / 24) * chartWidth;
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
-            ctx.strokeRect(hourX, 0, hourWidth, height);
+            ctx.strokeRect(hourX, chartPadding.top, hourWidth, chartHeight);
         }
     }
 
