@@ -469,6 +469,7 @@
                 <a href="#outreach" class="nav-link">Outreach</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <a href="./index.html" class="nav-link">Main Site</a>
+                <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
             </div>
             <div class="nav-toggle">
                 <span class="bar"></span>
@@ -564,6 +565,10 @@
             </div>
             
             <form class="contact-form" id="churchContactForm">
+                <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+                    <label for="website">Website</label>
+                    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                </div>
                 <div class="form-group">
                     <label for="churchName">Church Name & Mission *</label>
                     <textarea id="churchName" name="churchName" rows="3" placeholder="Enter your church name and briefly describe your mission..." required></textarea>
@@ -676,26 +681,74 @@
         </div>
     </footer>
 
+    <script>
+      window.STATEADVISORS = window.STATEADVISORS || {
+        portalUrl: "https://app.statesolaradvisors.com"
+      };
+    </script>
     <script src="script.js"></script>
     <script>
         // Church-specific JavaScript
         document.getElementById('churchContactForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Get form data
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // Validate phone number format
             const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/;
             if (!phoneRegex.test(data.phoneNumber)) {
                 alert('Please enter phone number in format: (555) 123-4567');
                 return;
             }
-            
-            // Show success message
-            alert('Thank you! We will call you at your preferred time. God bless!');
-            this.reset();
+
+            const ALLOWED_PORTALS = new Set([
+                'https://app.statesolaradvisors.com',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000'
+            ]);
+            const rawPortal = (window.STATEADVISORS && window.STATEADVISORS.portalUrl || '').replace(/\/$/, '');
+            const portalBase = ALLOWED_PORTALS.has(rawPortal) ? rawPortal : '';
+            const finishOk = () => {
+                alert('Thank you! We will call you at your preferred time. God bless!');
+                this.reset();
+            };
+
+            if (!portalBase) {
+                console.warn('STATEADVISORS.portalUrl empty or rejected — church lead was not sent to CRM.');
+                finishOk();
+                return;
+            }
+
+            const churchText = String(data.churchName || '').trim();
+            const firstLine = churchText.split('\n')[0].slice(0, 100) || 'Church';
+
+            fetch(`${portalBase}/api/ingest/website`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    website: data.website || '',
+                    fullName: firstLine,
+                    phone: data.phoneNumber,
+                    message: [
+                        churchText,
+                        `Heard from: ${data.heardFrom || ''}`,
+                        `Call time: ${data.callTime || ''}`,
+                        data.preferredTime ? `Preferred time: ${data.preferredTime}` : ''
+                    ].filter(Boolean).join('\n'),
+                    leadSource: 'church_form'
+                })
+            })
+            .then((res) => {
+                if (!res.ok) throw new Error('CRM ingest failed');
+                finishOk();
+            })
+            .catch((err) => {
+                console.error(err);
+                alert('Sorry, we could not submit your request right now. Please try again or email us.');
+            });
         });
 
         // Phone number formatting

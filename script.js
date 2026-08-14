@@ -136,21 +136,61 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loading state
             submitButton.textContent = 'Sending...';
             submitButton.disabled = true;
-            
-            // Submit to Formspree
-            fetch(this.action, {
+
+            const ALLOWED_PORTALS = new Set([
+                'https://app.statesolaradvisors.com',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000'
+            ]);
+            const rawPortal = (window.STATEADVISORS && window.STATEADVISORS.portalUrl || '').replace(/\/$/, '');
+            const portalBase = ALLOWED_PORTALS.has(rawPortal) ? rawPortal : '';
+            if (rawPortal && !portalBase) {
+                console.warn('STATEADVISORS.portalUrl rejected — not in allowlist.');
+            }
+            const crmPayload = {
+                website: formData.get('website') || '',
+                fullName: String(formData.get('name') || ''),
+                email: String(formData.get('email') || ''),
+                phone: String(formData.get('phone') || ''),
+                street: String(formData.get('street') || ''),
+                city: String(formData.get('town') || ''),
+                state: String(formData.get('state') || ''),
+                zip: String(formData.get('zipcode') || ''),
+                company: String(formData.get('company') || ''),
+                message: [
+                    formData.get('monthly-bill') ? `Monthly bill: ${formData.get('monthly-bill')}` : '',
+                    formData.get('message') || ''
+                ].filter(Boolean).join('\n'),
+                leadSource: 'website_contact'
+            };
+
+            const formspreePromise = fetch(this.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Show popup instead of notification
+                headers: { 'Accept': 'application/json' }
+            });
+
+            const crmPromise = portalBase
+                ? fetch(`${portalBase}/api/ingest/website`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(crmPayload)
+                }).catch((err) => {
+                    console.warn('CRM ingest failed (Formspree may still succeed):', err);
+                    return null;
+                })
+                : Promise.resolve(null);
+
+            Promise.all([formspreePromise, crmPromise])
+            .then(([formspreeRes, crmRes]) => {
+                const formspreeOk = formspreeRes && formspreeRes.ok;
+                const crmOk = crmRes && crmRes.ok;
+                if (formspreeOk || crmOk) {
                     showFormPopup();
                     this.reset();
-                    // Reset character counter
                     if (charCounter) {
                         charCounter.textContent = '0';
                         charCounter.parentElement.classList.remove('warning', 'danger');
@@ -164,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Sorry, there was an error sending your message. Please try again or contact us directly.', 'error');
             })
             .finally(() => {
-                // Reset button
                 submitButton.textContent = originalText;
                 submitButton.disabled = false;
             });

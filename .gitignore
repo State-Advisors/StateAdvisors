@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# ENTIRE portal CRM - local PC + Railway only. NEVER publish to public GitHub.
+portal/
+
+# Editor / agent local metadata (deployment notes stay off public GitHub)
+.cursor/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

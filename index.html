@@ -26,6 +26,7 @@
                 <a href="#solutions" class="nav-link">Solutions</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <a href="./about.html" class="nav-link">About</a>
+                <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
             </div>
             <div class="nav-toggle">
                 <span class="bar"></span>
@@ -684,6 +685,11 @@
                 </div>
                 
                 <form action="https://formspree.io/f/xwpqqoqp" method="POST" id="solar-form">
+                    <!-- Honeypot for CRM ingest bots — leave empty -->
+                    <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+                        <label for="website">Website</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
                     <div class="form-layout">
                         <!-- Left Column - Required Fields -->
                         <div class="form-column required-fields">
@@ -860,6 +866,7 @@
                         <li><a href="./about.html">About Us</a></li>
                         <li><a href="#process">Our Process</a></li>
                         <li><a href="#contact">Contact</a></li>
+                        <li><a href="https://app.statesolaradvisors.com/login">Login</a></li>
                         <li><a href="#careers">Careers</a></li>
                     </ul>
                 </div>
@@ -892,6 +899,12 @@
         </div>
     </div>
 
+    <!-- portalUrl must stay on the production CRM host (client JS allowlists this value) -->
+    <script>
+      window.STATEADVISORS = window.STATEADVISORS || {
+        portalUrl: "https://app.statesolaradvisors.com"
+      };
+    </script>
     <script src="script.js"></script>
 </body>
 </html> 
