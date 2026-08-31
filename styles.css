@@ -1037,6 +1037,78 @@ body {
     color: #ef4444;
 }
 
+/* Common questions — exclusive accordion (Palmetto / Tesla-style lander) */
+.faq-section {
+    background: #f8fafc;
+    padding: 80px 0;
+}
+
+.faq-list {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    gap: 12px;
+}
+
+.faq-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.faq-item[open] {
+    border-color: #2563eb;
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.1);
+}
+
+.faq-item summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1.2rem 1.4rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-item summary::after {
+    content: "+";
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 26px;
+    text-align: center;
+}
+
+.faq-item[open] summary::after {
+    content: "−";
+}
+
+.faq-answer {
+    padding: 0 1.4rem 1.3rem;
+    color: #475569;
+    font-size: 1.02rem;
+    line-height: 1.65;
+}
+
+.faq-answer p {
+    margin: 0;
+}
+
 /* Footer */
 .footer {
     background: #0f172a;

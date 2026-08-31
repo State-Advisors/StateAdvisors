@@ -1009,3 +1009,16 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSolarMonitor();
         setInterval(updateSolarMonitor, 5000); // Update every 5 seconds
     });
+
+    // Common questions: only one answer open at a time
+    document.addEventListener('DOMContentLoaded', function () {
+        const items = document.querySelectorAll('.faq-item');
+        items.forEach((item) => {
+            item.addEventListener('toggle', () => {
+                if (!item.open) return;
+                items.forEach((other) => {
+                    if (other !== item) other.removeAttribute('open');
+                });
+            });
+        });
+    });
