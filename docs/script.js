@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 state: String(formData.get('state') || ''),
                 zip: String(formData.get('zipcode') || ''),
                 company: String(formData.get('company') || ''),
+                monthlyBill: String(formData.get('monthly-bill') || ''),
                 message: [
                     formData.get('monthly-bill') ? `Monthly bill: ${formData.get('monthly-bill')}` : '',
                     formData.get('message') || ''
