@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isCurrency && isThousands) {
                         target.textContent = '$' + Math.floor(currentValue).toLocaleString() + 'K+';
                     } else if (isCurrency) {
-                        target.textContent = '$' + Math.floor(currentValue).toLocaleString();
+                        target.textContent = '$' + Math.floor(currentValue).toLocaleString() + (hasPlus ? '+' : '');
                     } else if (isPercentage) {
                         target.textContent = Math.floor(currentValue) + '%';
                     } else if (hasPlus) {
