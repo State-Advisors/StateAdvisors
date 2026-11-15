@@ -637,6 +637,22 @@
                         </div>
                     </div>
                 </div>
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="ohio-home.jpg" alt="Two-story brick and siding house with rooftop solar on a tree-lined Columbus, Ohio street">
+                        <div class="project-overlay">
+                            <span class="project-type">Residential</span>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>Columbus, OH home</h3>
+                        <p>20 panels, 8.0 kW residential rooftop array. About 9,895 kWh a year, worth $1,918 at Ohio's average residential price of 19.38¢/kWh.</p>
+                        <div class="project-stats">
+                            <span><i class="fas fa-solar-panel"></i> 20 panels</span>
+                            <span><i class="fas fa-dollar-sign"></i> $1,918 annual savings</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -678,68 +694,135 @@
         <div class="container">
             <div class="section-header">
                 <h2>Live Solar Production</h2>
-                <p>See how one of our solar systems is performing right now</p>
+                <p>See how these solar systems are performing right now</p>
             </div>
             <div class="monitor-carousel">
-                <button type="button" class="monitor-arrow monitor-prev" aria-label="Previous system" disabled>
-                    <i class="fas fa-chevron-left"></i>
+                <button type="button" class="monitor-arrow monitor-prev is-hidden" aria-label="Previous system">
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M40 12 L20 32 L40 52" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <div class="monitor-viewport">
                     <div class="monitor-track">
-                        <article class="monitor-slide">
-                <div class="monitor-card">
-                    <div class="monitor-header">
-                        <h3>Long Island home</h3>
-                        <p class="monitor-project">33 panels, 13.2 kW. We designed and installed this rooftop array.</p>
-                    </div>
-                    <div class="monitor-stats">
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-sun"></i>
+                        <article class="monitor-slide" data-monitor="li">
+                            <div class="monitor-card">
+                                <div class="monitor-header">
+                                    <h3>Long Island, NY home</h3>
+                                    <p class="monitor-project">33 panels, 13.2 kW. Residential rooftop array.</p>
+                                </div>
+                                <div class="monitor-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-sun"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value daily-production">0.0</span>
+                                            <span class="stat-unit">kWh</span>
+                                            <span class="stat-label">Today's production</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value money-today">—</span>
+                                            <span class="stat-label">Value of today's production</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="monitor-rate">New York average residential price, 28.65¢/kWh.</p>
+                                <div class="monitor-chart">
+                                    <div class="chart-header">
+                                        <h4>24-Hour <span style="color: #10b981;">Production</span> & <span style="color: #f59e0b;">Consumption</span></h4>
+                                        <div class="chart-legend">
+                                            <span class="legend-item"><span class="legend-color solar"></span> Solar Production</span>
+                                            <span class="legend-item"><span class="legend-color consumption"></span> Home consumption</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas class="production-chart" width="800" height="300"></canvas>
+                                    </div>
+                                    <div class="chart-time"><span class="current-time">Loading...</span> • Eastern Time</div>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="daily-production">0.0</span>
-                                <span class="stat-unit">kWh</span>
-                                <span class="stat-label">Today's production</span>
+                        </article>
+                        <article class="monitor-slide" data-monitor="oh">
+                            <div class="monitor-card">
+                                <div class="monitor-header">
+                                    <h3>Columbus, OH home</h3>
+                                    <p class="monitor-project">20 panels, 8.0 kW. Residential rooftop array.</p>
+                                </div>
+                                <div class="monitor-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-sun"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value daily-production">0.0</span>
+                                            <span class="stat-unit">kWh</span>
+                                            <span class="stat-label">Today's production</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value money-today">—</span>
+                                            <span class="stat-label">Value of today's production</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="monitor-rate">Ohio average residential price, 19.38¢/kWh.</p>
+                                <div class="monitor-chart">
+                                    <div class="chart-header">
+                                        <h4>24-Hour <span style="color: #10b981;">Production</span> & <span style="color: #f59e0b;">Consumption</span></h4>
+                                        <div class="chart-legend">
+                                            <span class="legend-item"><span class="legend-color solar"></span> Solar Production</span>
+                                            <span class="legend-item"><span class="legend-color consumption"></span> Home consumption</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas class="production-chart" width="800" height="300"></canvas>
+                                    </div>
+                                    <div class="chart-time"><span class="current-time">Loading...</span> • Eastern Time</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-icon">
-                                <i class="fas fa-dollar-sign"></i>
+                        </article>
+                        <article class="monitor-slide" data-monitor="com">
+                            <div class="monitor-card">
+                                <div class="monitor-header">
+                                    <h3>Commercial system</h3>
+                                    <p class="monitor-project">150 panels, 60 kW. Commercial rooftop array.</p>
+                                </div>
+                                <div class="monitor-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-sun"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value daily-production">0.0</span>
+                                            <span class="stat-unit">kWh</span>
+                                            <span class="stat-label">Today's production</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                                        <div class="stat-info">
+                                            <span class="stat-value money-today">—</span>
+                                            <span class="stat-label">Value of today's production</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="monitor-rate">U.S. average commercial price, 14.47¢/kWh.</p>
+                                <div class="monitor-chart">
+                                    <div class="chart-header">
+                                        <h4>24-Hour <span style="color: #10b981;">Production</span> & <span style="color: #f59e0b;">Consumption</span></h4>
+                                        <div class="chart-legend">
+                                            <span class="legend-item"><span class="legend-color solar"></span> Solar Production</span>
+                                            <span class="legend-item"><span class="legend-color consumption"></span> Building consumption</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas class="production-chart" width="800" height="300"></canvas>
+                                    </div>
+                                    <div class="chart-time"><span class="current-time">Loading...</span> • Local time</div>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="money-today">—</span>
-                                <span class="stat-label">Value of today's production</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="monitor-chart">
-                        <div class="chart-header">
-                            <h4>24-Hour <span style="color: #10b981;">Production</span> & <span style="color: #f59e0b;">Consumption</span></h4>
-                            <div class="chart-legend">
-                                <span class="legend-item">
-                                    <span class="legend-color solar"></span>
-                                    Solar Production
-                                </span>
-                                <span class="legend-item">
-                                    <span class="legend-color consumption"></span>
-                                    Home Consumption
-                                </span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="production-chart" width="800" height="300"></canvas>
-                        </div>
-                        <div class="chart-time">
-                            <span id="current-time">Loading...</span> • NYC Time
-                        </div>
-                    </div>
-                </div>
                         </article>
                     </div>
                 </div>
-                <button type="button" class="monitor-arrow monitor-next" aria-label="Next system" disabled>
-                    <i class="fas fa-chevron-right"></i>
+                <button type="button" class="monitor-arrow monitor-next" aria-label="Next system">
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M24 12 L44 32 L24 52" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
             </div>
         </div>

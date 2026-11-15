@@ -1060,15 +1060,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     };
 
-    // Solar monitor: 33 x 400 W (13.2 kW) at Long Island, clear-sky curve for the current New York clock.
-    const MONITOR_LAT = 40.79 * Math.PI / 180;
-    const MONITOR_DC_KW = 13.2;
-    const MONITOR_PR = 0.84;
-    const MONITOR_RATE = 0.25;
+    // Three arrays. Prices are EIA Electric Power Monthly Table 5.6.A, August 2026:
+    // New York residential 28.65¢/kWh, Ohio residential 19.38¢/kWh,
+    // U.S. average commercial 14.47¢/kWh. The commercial array is not named with a place.
+    const MONITOR_SYSTEMS = {
+        li: { lat: 40.79, kw: 13.2, pr: 0.84, rate: 0.2865, tz: 'America/New_York', kind: 'home' },
+        oh: { lat: 39.96, kw: 8.0, pr: 0.84, rate: 0.1938, tz: 'America/New_York', kind: 'home' },
+        com: { lat: 40.0, kw: 60, pr: 0.84, rate: 0.1447, tz: 'America/New_York', kind: 'commercial', loadKw: 28 }
+    };
 
-    function monitorParts(date) {
+    function monitorParts(date, timeZone) {
         const fmt = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
+            timeZone: timeZone,
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -1090,81 +1093,86 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 0)) / 86400000);
     }
 
-    function monitorClearness(year, month, day) {
-        const seed = year * 10000 + month * 100 + day;
-        const unit = ((seed * 9301 + 49297) % 233280) / 233280;
-        return 0.72 + unit * 0.22;
+    function monitorCycle(year, month, day) {
+        return Math.floor(Date.UTC(year, month - 1, day) / 86400000) % 3;
     }
 
-    function monitorElevation(dayOfYear, hourFraction) {
+    function monitorClearness(month) {
+        return [0.62, 0.66, 0.70, 0.74, 0.76, 0.78, 0.78, 0.76, 0.74, 0.70, 0.64, 0.60][month - 1];
+    }
+
+    // Three repeating day shapes. Close in total energy, different in where the day peaks.
+    function productionShape(hour, cycle) {
+        const h = hour + 0.5;
+        if (cycle === 0) return h < 11.5 ? 0.96 : 1.05;
+        if (cycle === 1) return (h >= 11 && h < 14) ? 0.72 : 1.04;
+        if (h < 11) return 1.10;
+        if (h < 13) return 0.98;
+        return 0.74;
+    }
+
+    function monitorElevation(latDeg, dayOfYear, hourFraction) {
+        const lat = latDeg * Math.PI / 180;
         const declination = (23.45 * Math.PI / 180) * Math.sin((2 * Math.PI * (284 + dayOfYear)) / 365);
         const hourAngle = (hourFraction - 12) * (15 * Math.PI / 180);
-        const sinEl = Math.sin(MONITOR_LAT) * Math.sin(declination) + Math.cos(MONITOR_LAT) * Math.cos(declination) * Math.cos(hourAngle);
+        const sinEl = Math.sin(lat) * Math.sin(declination) + Math.cos(lat) * Math.cos(declination) * Math.cos(hourAngle);
         return Math.asin(Math.max(-1, Math.min(1, sinEl)));
     }
 
-    function monitorHourKwh(year, month, day, hour) {
-        const elevation = monitorElevation(monitorDayOfYear(year, month, day), hour + 0.5);
+    function monitorHourKwh(system, year, month, day, hour) {
+        const elevation = monitorElevation(system.lat, monitorDayOfYear(year, month, day), hour + 0.5);
         if (elevation <= 0.05) return 0;
-        return MONITOR_DC_KW * MONITOR_PR * monitorClearness(year, month, day) * Math.sin(elevation);
+        const cycle = monitorCycle(year, month, day);
+        return system.kw * system.pr * monitorClearness(month) * productionShape(hour, cycle) * Math.sin(elevation);
     }
 
-    function monitorHourUse(hour) {
-        return 0.65
-            + 0.85 * Math.exp(-Math.pow(hour - 8, 2) / 3.2)
-            + 1.35 * Math.exp(-Math.pow(hour - 18.5, 2) / 4.2);
+    function monitorHourUse(system, hour, cycle) {
+        const h = hour + 0.5;
+        if (system.kind === 'commercial') {
+            const day = 1 / (1 + Math.exp(-(h - 7.2) * 1.4)) * (1 - 1 / (1 + Math.exp(-(h - 18.2) * 1.3)));
+            const lunch = Math.exp(-Math.pow(h - 12.2, 2) / 1.2);
+            let kw = system.loadKw * (0.18 + 0.85 * day - 0.12 * lunch * day);
+            if (cycle === 1) kw *= h < 12 ? 0.92 : 1.08;
+            if (cycle === 2) kw *= 0.90 + 0.10 * day;
+            return kw;
+        }
+        const base = 0.55
+            + 0.9 * Math.exp(-Math.pow(h - 7.5, 2) / 3.4)
+            + 0.35 * Math.exp(-Math.pow(h - 13, 2) / 8)
+            + 1.25 * Math.exp(-Math.pow(h - 18.5, 2) / 4.5);
+        if (cycle === 1) return base * (h < 11 ? 0.82 : h > 16 ? 1.28 : 1);
+        if (cycle === 2) return base * (h > 16 ? 0.72 : (h >= 11 && h < 15) ? 1.30 : 1);
+        return base;
     }
 
-    function monitorDayKwh(year, month, day, throughHour, minuteFraction) {
+    function monitorDayKwh(system, year, month, day, throughHour, minuteFraction) {
         let total = 0;
         const last = throughHour === undefined ? 23 : throughHour;
         for (let hour = 0; hour <= last; hour++) {
-            const full = monitorHourKwh(year, month, day, hour);
-            if (throughHour !== undefined && hour === throughHour) {
-                total += full * minuteFraction;
-            } else {
-                total += full;
-            }
+            const full = monitorHourKwh(system, year, month, day, hour);
+            total += throughHour !== undefined && hour === throughHour ? full * minuteFraction : full;
         }
         return total;
     }
 
-    function monitorMoney(kwh) {
-        return (kwh * MONITOR_RATE).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-    }
-
     function updateSolarMonitor() {
-        const now = monitorParts(new Date());
-        const minuteFraction = now.minute / 60;
-        const todayKwh = monitorDayKwh(now.year, now.month, now.day, now.hour, minuteFraction);
-        let monthKwh = 0;
-        for (let day = 1; day < now.day; day++) {
-            monthKwh += monitorDayKwh(now.year, now.month, day);
-        }
-        monthKwh += todayKwh;
-        let yearKwh = 0;
-        for (let month = 1; month < now.month; month++) {
-            const days = new Date(Date.UTC(now.year, month, 0)).getUTCDate();
-            for (let day = 1; day <= days; day++) {
-                yearKwh += monitorDayKwh(now.year, month, day);
+        document.querySelectorAll('.monitor-slide').forEach(slide => {
+            const system = MONITOR_SYSTEMS[slide.dataset.monitor];
+            if (!system) return;
+            const now = monitorParts(new Date(), system.tz);
+            const todayKwh = monitorDayKwh(system, now.year, now.month, now.day, now.hour, now.minute / 60);
+            const dailyEl = slide.querySelector('.daily-production');
+            const moneyEl = slide.querySelector('.money-today');
+            if (dailyEl) dailyEl.textContent = todayKwh.toFixed(1);
+            if (moneyEl) {
+                moneyEl.textContent = (todayKwh * system.rate).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
             }
-        }
-        yearKwh += monthKwh;
-
-        const dailyEl = document.getElementById('daily-production');
-        const monthEl = document.getElementById('month-production');
-        const todayMoneyEl = document.getElementById('money-today');
-        const yearMoneyEl = document.getElementById('money-to-date');
-        if (dailyEl) dailyEl.textContent = todayKwh.toFixed(1);
-        if (monthEl) monthEl.textContent = Math.round(monthKwh).toLocaleString('en-US');
-        if (todayMoneyEl) todayMoneyEl.textContent = monitorMoney(todayKwh);
-        if (yearMoneyEl) yearMoneyEl.textContent = monitorMoney(yearKwh);
-
-        updateProductionChart(now);
+            updateProductionChart(slide, system, now);
+        });
     }
 
-    function updateProductionChart(now) {
-        const canvas = document.getElementById('production-chart');
+    function updateProductionChart(slide, system, now) {
+        const canvas = slide.querySelector('.production-chart');
         if (!canvas) return;
         const parentWidth = (canvas.parentElement && canvas.parentElement.clientWidth) || 800;
         const cssWidth = Math.max(280, parentWidth);
@@ -1181,16 +1189,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const chartPadding = { left: 52, right: 16, top: 16, bottom: 36 };
         const chartWidth = width - chartPadding.left - chartPadding.right;
         const chartHeight = height - chartPadding.top - chartPadding.bottom;
+        const cycle = monitorCycle(now.year, now.month, now.day);
 
         const solarData = [];
         const useData = [];
         let peak = 1;
         for (let hour = 0; hour < 24; hour++) {
-            const produced = monitorHourKwh(now.year, now.month, now.day, hour);
-            const used = monitorHourUse(hour);
+            const produced = monitorHourKwh(system, now.year, now.month, now.day, hour);
+            const used = monitorHourUse(system, hour, cycle);
             solarData.push(produced);
             useData.push(used);
-            if (hour <= now.hour) peak = Math.max(peak, produced, used);
+            peak = Math.max(peak, produced, used);
         }
         const axisMax = Math.max(4, Math.ceil(peak));
 
@@ -1221,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.stroke();
         }
 
-        const timeDisplay = document.getElementById('current-time');
+        const timeDisplay = slide.querySelector('.current-time');
         if (timeDisplay) {
             const suffix = now.hour >= 12 ? 'PM' : 'AM';
             const hour12 = now.hour % 12 || 12;
@@ -1275,8 +1284,14 @@ document.addEventListener('DOMContentLoaded', function() {
             let index = 0;
             const showMonitor = () => {
                 track.style.transform = `translateX(${-index * 100}%)`;
-                prev.disabled = index === 0;
-                next.disabled = index >= slides.length - 1;
+                const atStart = index === 0;
+                const atEnd = index >= slides.length - 1;
+                prev.classList.toggle('is-hidden', atStart);
+                next.classList.toggle('is-hidden', atEnd);
+                prev.disabled = atStart;
+                next.disabled = atEnd;
+                prev.setAttribute('aria-hidden', atStart ? 'true' : 'false');
+                next.setAttribute('aria-hidden', atEnd ? 'true' : 'false');
             };
             prev.addEventListener('click', () => {
                 if (index === 0) return;

@@ -47,16 +47,16 @@ body {
 }
 
 .nav-logo .brand-name {
-    font-size: 2.05rem;
+    font-size: 2.38rem;
     font-weight: 800;
-    letter-spacing: 0.012em;
+    letter-spacing: 0.008em;
     line-height: 1;
     white-space: nowrap;
     color: #0f172a;
 }
 
 .nav-logo .brand-strong {
-    color: #3b82f6;
+    color: #60a5fa;
 }
 
 .logo-image {
@@ -752,7 +752,7 @@ body {
 
 .projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2rem;
     margin-top: 3rem;
 }
@@ -2085,27 +2085,45 @@ a.instant-quote-card {
 
     .monitor-track {
         display: flex;
+        width: 100%;
         transition: transform 0.35s ease;
     }
 
     .monitor-slide {
-        min-width: 100%;
+        flex: 0 0 100%;
+        min-width: 0;
     }
 
     .monitor-arrow {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.08);
-        color: white;
+        width: 72px;
+        height: 96px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: #d8dde6;
         cursor: pointer;
-        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
     }
 
-    .monitor-arrow:disabled {
-        opacity: 0.35;
-        cursor: default;
+    .monitor-arrow svg {
+        width: 64px;
+        height: 64px;
+        display: block;
+    }
+
+    .monitor-arrow.is-hidden {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .monitor-rate {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.95rem;
+        margin: -0.75rem 0 1.5rem;
     }
 
     .monitor-project {
@@ -2210,6 +2228,8 @@ a.instant-quote-card {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
         margin-bottom: 1rem;
     }
 
