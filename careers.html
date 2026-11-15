@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers - StateAdvisors Solar</title>
+    <meta name="description" content="StateAdvisors Solar is hiring canvassers and salesmen. Tell us how to reach you.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="logo-removebg-preview.png" alt="StateAdvisors Solar Logo" class="logo-image">
+                <span>StateAdvisors Solar</span>
+            </div>
+            <div class="nav-menu">
+                <a href="./index.html#commercial" class="nav-link">Commercial</a>
+                <a href="./index.html#residential" class="nav-link">Residential</a>
+                <a href="./church.html" class="nav-link">Churches</a>
+                <a href="./index.html#contact" class="nav-link">Contact</a>
+                <a href="./careers.html" class="nav-link active">Careers</a>
+                <a href="./about.html" class="nav-link">About</a>
+                <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
+            </div>
+            <div class="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <section class="about-hero">
+        <div class="container">
+            <div class="about-hero-content">
+                <h1>We are hiring</h1>
+                <p>Two roles are open: canvassers who set the conversation, and salesmen who sit down with the household after that conversation is on the calendar.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-content">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-text">
+                    <h2>Canvasser</h2>
+                    <p>You work outside, in neighborhoods we assign. You introduce StateAdvisors, talk through the electric bill and the roof at a high level, and set a time for a salesman to visit. You keep a simple record of who you spoke with.</p>
+                    <p>You need a reliable way to get to the neighborhood, comfort spending the day on your feet, and a plain way of speaking. A no is part of the day. Door-to-door or outside sales experience is useful and is not required. We teach the conversation before you go out on your own.</p>
+                    <h3>Salesman</h3>
+                    <p>You meet homeowners at appointments that are already set. You walk through the bill, the roof, and whether a purchase or a lease fits. You answer what they ask before anyone is asked to decide. You need a driver license and a car, because the visit is at the home. Evenings and weekends come up, because that is when many households are there.</p>
+                    <p>Sales experience helps, including home-improvement or in-home work. It is not required. What we look for is someone who can explain a number without rushing, take coaching, and show up when the appointment says.</p>
+                    <p>Pay is discussed on the call. Send your name and phone and we will tell you what the week looks like.</p>
+                </div>
+                <div>
+                    <div class="contact-form-container" style="box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #1e293b;">Job inquiry</h2>
+                        <p class="quote-followup-note">A short note is enough. We call the number you leave.</p>
+                        <form action="https://formspree.io/f/xwpqqoqp" method="POST" id="job-form">
+                            <div class="form-group">
+                                <label for="job-name">Name</label>
+                                <input type="text" id="job-name" name="name" required autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="job-phone">Phone</label>
+                                <input type="tel" id="job-phone" name="phone" required autocomplete="tel">
+                            </div>
+                            <div class="form-group">
+                                <label for="job-email">Email</label>
+                                <input type="email" id="job-email" name="email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="job-role">Role</label>
+                                <select id="job-role" name="role" required>
+                                    <option value="">Select</option>
+                                    <option value="Canvasser">Canvasser</option>
+                                    <option value="Salesman">Salesman</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="job-area">City or area</label>
+                                <input type="text" id="job-area" name="area" autocomplete="address-level2">
+                            </div>
+                            <div class="form-group">
+                                <label for="job-note">Anything we should know</label>
+                                <textarea id="job-note" name="note" rows="4" maxlength="2000"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Send inquiry</button>
+                            <p class="form-quiet">We use this to call you about the role.</p>
+                            <p id="job-thanks" class="quote-followup-note" hidden>Received. We will call the number you sent.</p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="logo-removebg-preview.png" alt="StateAdvisors Solar Logo" class="logo-image-footer">
+                        <span>StateAdvisors Solar</span>
+                    </div>
+                    <p>Transforming businesses and homes with sustainable solar energy solutions.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="customer-care.html">Customer Care</a></li>
+                        <li><a href="process.html">Our Process</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> (347) 308-4256</p>
+                        <p><i class="fas fa-envelope"></i> StateSolarAdvisors@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Serving The United States</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 StateAdvisors Solar. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>

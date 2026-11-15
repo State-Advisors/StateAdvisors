@@ -469,6 +469,8 @@
                 <a href="#outreach" class="nav-link">Outreach</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <a href="./index.html" class="nav-link">Main Site</a>
+                <a href="./careers.html" class="nav-link">Careers</a>
+                <a href="./process.html" class="nav-link">Process</a>
                 <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
             </div>
             <div class="nav-toggle">
@@ -610,6 +612,7 @@
                 </div>
                 
                 <button type="submit" class="submit-btn">Request Call Back</button>
+                <p class="form-quiet">We use this to call your church back.</p>
             </form>
         </div>
     </section>
@@ -713,37 +716,57 @@
                 this.reset();
             };
 
-            if (!portalBase) {
-                console.warn('STATEADVISORS.portalUrl empty or rejected — church lead was not sent to CRM.');
-                finishOk();
-                return;
-            }
-
             const churchText = String(data.churchName || '').trim();
             const firstLine = churchText.split('\n')[0].slice(0, 100) || 'Church';
+            const note = [
+                churchText,
+                `Heard from: ${data.heardFrom || ''}`,
+                `Call time: ${data.callTime || ''}`,
+                data.preferredTime ? `Preferred time: ${data.preferredTime}` : ''
+            ].filter(Boolean).join('\n');
 
-            fetch(`${portalBase}/api/ingest/website`, {
+            const mail = new FormData();
+            mail.append('_subject', 'Church inquiry');
+            mail.append('form_type', 'church');
+            mail.append('church', churchText);
+            mail.append('phone', data.phoneNumber || '');
+            mail.append('heard_from', data.heardFrom || '');
+            mail.append('call_time', data.callTime || '');
+            if (data.preferredTime) mail.append('preferred_time', data.preferredTime);
+            if (data.website) mail.append('website', data.website);
+
+            const formspreePromise = fetch('https://formspree.io/f/xwpqqoqp', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    website: data.website || '',
-                    fullName: firstLine,
-                    phone: data.phoneNumber,
-                    message: [
-                        churchText,
-                        `Heard from: ${data.heardFrom || ''}`,
-                        `Call time: ${data.callTime || ''}`,
-                        data.preferredTime ? `Preferred time: ${data.preferredTime}` : ''
-                    ].filter(Boolean).join('\n'),
-                    leadSource: 'church_form'
+                body: mail,
+                headers: { 'Accept': 'application/json' }
+            });
+            const crmPromise = portalBase
+                ? fetch(`${portalBase}/api/ingest/website`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        website: data.website || '',
+                        fullName: firstLine,
+                        phone: data.phoneNumber,
+                        message: note,
+                        leadSource: 'church_form'
+                    })
+                }).catch((err) => {
+                    console.warn('CRM ingest failed (Formspree may still succeed):', err);
+                    return null;
                 })
-            })
-            .then((res) => {
-                if (!res.ok) throw new Error('CRM ingest failed');
-                finishOk();
+                : Promise.resolve(null);
+
+            Promise.all([formspreePromise, crmPromise])
+            .then(([formspreeRes, crmRes]) => {
+                if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) {
+                    finishOk();
+                    return;
+                }
+                throw new Error('Church inquiry was not delivered');
             })
             .catch((err) => {
                 console.error(err);

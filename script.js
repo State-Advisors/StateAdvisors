@@ -66,9 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const messageTextarea = document.getElementById('message');
             
             if (messageTextarea) {
-                // Auto-populate the message field
                 messageTextarea.value = `I'm interested in: ${interest}\n\n`;
-                messageTextarea.focus();
+                if (!messageTextarea.closest('[hidden]')) {
+                    messageTextarea.focus();
+                }
                 
                 // Update character counter
                 const charCounter = document.getElementById('char-count');
@@ -107,70 +108,100 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        solarForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate required fields
-            const requiredFields = this.querySelectorAll('[required]');
-            let isValid = true;
-            
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    field.style.borderColor = '#ef4444';
-                } else {
-                    field.style.borderColor = '#e5e7eb';
-                }
-            });
-            
-            if (!isValid) {
-                showNotification('Please fill in all required fields marked with *.', 'error');
-                return;
-            }
-            
-            // Get form data
-            const formData = new FormData(this);
-            const submitButton = this.querySelector('button[type="submit"]');
-            const originalText = submitButton.textContent;
-            
-            // Show loading state
-            submitButton.textContent = 'Sending...';
-            submitButton.disabled = true;
+        const quoteContinue = document.getElementById('quote-continue');
+        const quoteFollowup = document.getElementById('quote-step-followup');
+        const quoteRequired = document.getElementById('quote-step-required');
+        const callDate = document.getElementById('call-date');
+        const callTime = document.getElementById('call-time');
 
+        const portalBase = (function () {
             const ALLOWED_PORTALS = new Set([
                 'https://app.statesolaradvisors.com',
                 'http://localhost:3000',
                 'http://127.0.0.1:3000'
             ]);
             const rawPortal = (window.STATEADVISORS && window.STATEADVISORS.portalUrl || '').replace(/\/$/, '');
-            const portalBase = ALLOWED_PORTALS.has(rawPortal) ? rawPortal : '';
-            if (rawPortal && !portalBase) {
+            const allowed = ALLOWED_PORTALS.has(rawPortal) ? rawPortal : '';
+            if (rawPortal && !allowed) {
                 console.warn('STATEADVISORS.portalUrl rejected — not in allowlist.');
             }
-            const crmPayload = {
-                website: formData.get('website') || '',
-                fullName: String(formData.get('name') || ''),
-                email: String(formData.get('email') || ''),
-                phone: String(formData.get('phone') || ''),
-                street: String(formData.get('street') || ''),
-                city: String(formData.get('town') || ''),
-                state: String(formData.get('state') || ''),
-                zip: String(formData.get('zipcode') || ''),
-                company: String(formData.get('company') || ''),
-                monthlyBill: String(formData.get('monthly-bill') || ''),
-                message: [
-                    formData.get('monthly-bill') ? `Monthly bill: ${formData.get('monthly-bill')}` : '',
-                    formData.get('message') || ''
-                ].filter(Boolean).join('\n'),
-                leadSource: 'website_contact'
-            };
+            return allowed;
+        })();
 
-            const formspreePromise = fetch(this.action, {
+        function markValidity(fields) {
+            let isValid = true;
+            fields.forEach(field => {
+                const value = String(field.value || '').trim();
+                if (!value) {
+                    isValid = false;
+                    field.style.borderColor = '#ef4444';
+                } else {
+                    field.style.borderColor = '#e5e7eb';
+                }
+            });
+            return isValid;
+        }
+
+        function nycDateParts(date) {
+            const fmt = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = Object.fromEntries(fmt.formatToParts(date).map(part => [part.type, part.value]));
+            return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day) };
+        }
+
+        function isoFromParts(parts) {
+            const month = String(parts.month).padStart(2, '0');
+            const day = String(parts.day).padStart(2, '0');
+            return `${parts.year}-${month}-${day}`;
+        }
+
+        function addDays(parts, days) {
+            const utc = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+            utc.setUTCDate(utc.getUTCDate() + days);
+            return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() };
+        }
+
+        function weekdayOf(iso) {
+            const [year, month, day] = iso.split('-').map(Number);
+            return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+        }
+
+        if (callTime) {
+            for (let minutes = 9 * 60; minutes <= 18 * 60; minutes += 30) {
+                const hour24 = Math.floor(minutes / 60);
+                const minute = minutes % 60;
+                const suffix = hour24 >= 12 ? 'PM' : 'AM';
+                const hour12 = hour24 % 12 || 12;
+                const label = `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+                const option = document.createElement('option');
+                option.value = label;
+                option.textContent = label;
+                callTime.appendChild(option);
+            }
+        }
+
+        if (callDate) {
+            const today = nycDateParts(new Date());
+            callDate.min = isoFromParts(addDays(today, 1));
+            callDate.max = isoFromParts(addDays(today, 21));
+        }
+
+        function sendLead(fields, crmPayload) {
+            const body = new FormData();
+            Object.entries(fields).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && String(value).trim() !== '') {
+                    body.append(key, value);
+                }
+            });
+            const formspreePromise = fetch(solarForm.action, {
                 method: 'POST',
-                body: formData,
+                body,
                 headers: { 'Accept': 'application/json' }
             });
-
             const crmPromise = portalBase
                 ? fetch(`${portalBase}/api/ingest/website`, {
                     method: 'POST',
@@ -184,29 +215,196 @@ document.addEventListener('DOMContentLoaded', function() {
                     return null;
                 })
                 : Promise.resolve(null);
+            return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
+                if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
+                throw new Error('Network response was not ok');
+            });
+        }
 
-            Promise.all([formspreePromise, crmPromise])
-            .then(([formspreeRes, crmRes]) => {
-                const formspreeOk = formspreeRes && formspreeRes.ok;
-                const crmOk = crmRes && crmRes.ok;
-                if (formspreeOk || crmOk) {
-                    showFormPopup();
-                    this.reset();
-                    if (charCounter) {
-                        charCounter.textContent = '0';
-                        charCounter.parentElement.classList.remove('warning', 'danger');
-                    }
-                } else {
-                    throw new Error('Network response was not ok');
+        function identityFields() {
+            return {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                street: document.getElementById('street').value.trim(),
+                town: document.getElementById('town').value.trim(),
+                state: document.getElementById('state').value.trim(),
+                zipcode: document.getElementById('zipcode').value.trim(),
+                website: document.getElementById('website').value
+            };
+        }
+
+        function showFollowup() {
+            quoteRequired.hidden = true;
+            quoteFollowup.hidden = false;
+            callDate.required = true;
+            callTime.required = true;
+            const rail = document.getElementById('contact');
+            if (rail) rail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        if (quoteContinue) {
+            quoteContinue.addEventListener('click', function () {
+                const fields = ['name', 'email', 'street', 'town', 'state', 'zipcode'].map(id => document.getElementById(id));
+                if (!markValidity(fields)) {
+                    showNotification('Please fill in all required fields marked with *.', 'error');
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
+                const who = identityFields();
+                const originalText = quoteContinue.textContent;
+                quoteContinue.textContent = 'Sending...';
+                quoteContinue.disabled = true;
+                sendLead({
+                    _subject: 'Solar quote request',
+                    form_type: 'quote_required',
+                    name: who.name,
+                    email: who.email,
+                    street: who.street,
+                    town: who.town,
+                    state: who.state,
+                    zipcode: who.zipcode,
+                    website: who.website
+                }, {
+                    website: who.website || '',
+                    fullName: who.name,
+                    email: who.email,
+                    street: who.street,
+                    city: who.town,
+                    state: who.state,
+                    zip: who.zipcode,
+                    message: 'Required quote details received. Follow-up may arrive separately.',
+                    leadSource: 'website_contact'
+                }).then(showFollowup).catch(() => {
+                    showNotification('Sorry, there was an error sending your message. Please try again or contact us directly.', 'error');
+                    quoteContinue.textContent = originalText;
+                    quoteContinue.disabled = false;
+                });
+            });
+        }
+
+        solarForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (quoteFollowup.hidden) {
+                quoteContinue.click();
+                return;
+            }
+            if (!markValidity([callDate, callTime])) {
+                showNotification('Choose a date and time for the call.', 'error');
+                return;
+            }
+            if (weekdayOf(callDate.value) === 0) {
+                callDate.style.borderColor = '#ef4444';
+                showNotification('Choose a Monday through Saturday.', 'error');
+                return;
+            }
+            const who = identityFields();
+            const phone = document.getElementById('phone').value.trim();
+            const company = document.getElementById('company').value.trim();
+            const monthlyBill = document.getElementById('monthly-bill').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const when = `${callDate.value} at ${callTime.value} (Eastern)`;
+            const submitButton = solarForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Sending...';
+            submitButton.disabled = true;
+            sendLead({
+                _subject: 'Solar quote follow-up and requested call time',
+                form_type: 'quote_followup',
+                name: who.name,
+                email: who.email,
+                street: who.street,
+                town: who.town,
+                state: who.state,
+                zipcode: who.zipcode,
+                company,
+                phone,
+                monthly_bill: monthlyBill,
+                message,
+                requested_call: when,
+                website: who.website
+            }, {
+                website: who.website || '',
+                fullName: who.name,
+                email: who.email,
+                phone,
+                street: who.street,
+                city: who.town,
+                state: who.state,
+                zip: who.zipcode,
+                company,
+                monthlyBill,
+                message: [
+                    monthlyBill ? `Monthly bill: ${monthlyBill}` : '',
+                    message,
+                    `Requested call: ${when}`
+                ].filter(Boolean).join('\n'),
+                leadSource: 'website_contact_followup'
+            }).then(() => {
+                showFormPopup();
+                solarForm.reset();
+                quoteFollowup.hidden = true;
+                quoteRequired.hidden = false;
+                callDate.required = false;
+                callTime.required = false;
+                if (charCounter) {
+                    charCounter.textContent = '0';
+                    charCounter.parentElement.classList.remove('warning', 'danger');
+                }
+            }).catch(() => {
                 showNotification('Sorry, there was an error sending your message. Please try again or contact us directly.', 'error');
-            })
-            .finally(() => {
+            }).finally(() => {
                 submitButton.textContent = originalText;
                 submitButton.disabled = false;
+            });
+        });
+    }
+
+    const jobForm = document.getElementById('job-form');
+    if (jobForm) {
+        jobForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const required = ['job-name', 'job-phone', 'job-email', 'job-role'].map(id => document.getElementById(id));
+            let valid = true;
+            required.forEach(field => {
+                if (!String(field.value || '').trim()) {
+                    valid = false;
+                    field.style.borderColor = '#ef4444';
+                } else {
+                    field.style.borderColor = '#e5e7eb';
+                }
+            });
+            if (!valid) {
+                showNotification('Add your name, phone, email, and the role.', 'error');
+                return;
+            }
+            const button = jobForm.querySelector('button[type="submit"]');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            const body = new FormData();
+            body.append('_subject', 'Job inquiry');
+            body.append('form_type', 'job_inquiry');
+            body.append('name', document.getElementById('job-name').value.trim());
+            body.append('phone', document.getElementById('job-phone').value.trim());
+            body.append('email', document.getElementById('job-email').value.trim());
+            body.append('role', document.getElementById('job-role').value);
+            const area = document.getElementById('job-area').value.trim();
+            const note = document.getElementById('job-note').value.trim();
+            if (area) body.append('area', area);
+            if (note) body.append('note', note);
+            fetch(jobForm.action, {
+                method: 'POST',
+                body,
+                headers: { 'Accept': 'application/json' }
+            }).then(res => {
+                if (!res.ok) throw new Error('Job inquiry was not delivered');
+                jobForm.reset();
+                const done = document.getElementById('job-thanks');
+                if (done) done.hidden = false;
+            }).catch(() => {
+                showNotification('Sorry, we could not send that. Call (347) 308-4256 or email StateSolarAdvisors@gmail.com.', 'error');
+            }).finally(() => {
+                button.disabled = false;
+                button.textContent = original;
             });
         });
     }
@@ -339,6 +537,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const finalValue = target.textContent;
                 const isPercentage = finalValue.includes('%');
                 const isCurrency = finalValue.includes('$');
+                const isThousands = /k/i.test(finalValue);
+                const hasPlus = finalValue.includes('+');
                 const numericValue = parseFloat(finalValue.replace(/[^0-9.]/g, ''));
                 
                 let currentValue = 0;
@@ -347,16 +547,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const timer = setInterval(() => {
                     currentValue += increment;
                     if (currentValue >= numericValue) {
-                        currentValue = numericValue;
+                        target.textContent = finalValue;
                         clearInterval(timer);
+                        return;
                     }
                     
-                    if (isCurrency) {
+                    if (isCurrency && isThousands) {
                         target.textContent = '$' + Math.floor(currentValue).toLocaleString() + 'K+';
+                    } else if (isCurrency) {
+                        target.textContent = '$' + Math.floor(currentValue).toLocaleString();
                     } else if (isPercentage) {
                         target.textContent = Math.floor(currentValue) + '%';
-                    } else {
+                    } else if (hasPlus) {
                         target.textContent = Math.floor(currentValue) + '+';
+                    } else {
+                        target.textContent = Math.floor(currentValue).toLocaleString();
                     }
                 }, 30);
                 
@@ -774,221 +979,191 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     };
 
-    // Solar Monitor Functions
-    function updateSolarMonitor() {
-        const now = new Date();
-        const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
-        const currentHour = nycTime.getHours();
-        
-        // Calculate daily production (accumulated) - adaptive to end at 45 kWh
-        let dailyProduction = 0;
-        if (currentHour >= 6) {
-            for (let hour = 6; hour <= Math.min(currentHour, 20); hour++) {
-                const distanceFromPeak = Math.abs(hour - 12);
-                let hourlyProduction = 35 * Math.exp(-(distanceFromPeak * distanceFromPeak) / 12);
-                
-                // Higher production during 10AM-4PM
-                if (hour >= 10 && hour <= 16) {
-                    hourlyProduction = 42 * Math.exp(-(distanceFromPeak * distanceFromPeak) / 12);
-                }
-                
-                // Apply time-based adjustments
-                if (hour < 12) {
-                    hourlyProduction *= (1 + (hour - 6) * 0.1);
-                }
-                if (hour > 12) {
-                    hourlyProduction *= (1 - (hour - 12) * 0.05);
-                }
-                
-                dailyProduction += hourlyProduction;
-            }
-        }
-        
-        // Scale to end at 45 kWh for the full day
-        const fullDayProduction = 45; // Target end-of-day total
-        const scaledProduction = dailyProduction * (fullDayProduction / (fullDayProduction * 0.8)); // Scale to target
-        
-        // Update display
-        document.getElementById('daily-production').textContent = Math.min(scaledProduction, fullDayProduction).toFixed(1);
-        
-        // Update chart
-        updateProductionChart();
+    // Solar monitor: 33 x 400 W (13.2 kW) at Long Island, clear-sky curve for the current New York clock.
+    const MONITOR_LAT = 40.79 * Math.PI / 180;
+    const MONITOR_DC_KW = 13.2;
+    const MONITOR_PR = 0.84;
+    const MONITOR_RATE = 0.25;
+
+    function monitorParts(date) {
+        const fmt = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+        });
+        const parts = Object.fromEntries(fmt.formatToParts(date).map(part => [part.type, part.value]));
+        return {
+            year: Number(parts.year),
+            month: Number(parts.month),
+            day: Number(parts.day),
+            hour: Number(parts.hour) % 24,
+            minute: Number(parts.minute)
+        };
     }
 
-    function updateProductionChart() {
+    function monitorDayOfYear(year, month, day) {
+        return Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 0)) / 86400000);
+    }
+
+    function monitorClearness(year, month, day) {
+        const seed = year * 10000 + month * 100 + day;
+        const unit = ((seed * 9301 + 49297) % 233280) / 233280;
+        return 0.72 + unit * 0.22;
+    }
+
+    function monitorElevation(dayOfYear, hourFraction) {
+        const declination = (23.45 * Math.PI / 180) * Math.sin((2 * Math.PI * (284 + dayOfYear)) / 365);
+        const hourAngle = (hourFraction - 12) * (15 * Math.PI / 180);
+        const sinEl = Math.sin(MONITOR_LAT) * Math.sin(declination) + Math.cos(MONITOR_LAT) * Math.cos(declination) * Math.cos(hourAngle);
+        return Math.asin(Math.max(-1, Math.min(1, sinEl)));
+    }
+
+    function monitorHourKwh(year, month, day, hour) {
+        const elevation = monitorElevation(monitorDayOfYear(year, month, day), hour + 0.5);
+        if (elevation <= 0.05) return 0;
+        return MONITOR_DC_KW * MONITOR_PR * monitorClearness(year, month, day) * Math.sin(elevation);
+    }
+
+    function monitorHourUse(hour) {
+        return 0.65
+            + 0.85 * Math.exp(-Math.pow(hour - 8, 2) / 3.2)
+            + 1.35 * Math.exp(-Math.pow(hour - 18.5, 2) / 4.2);
+    }
+
+    function monitorDayKwh(year, month, day, throughHour, minuteFraction) {
+        let total = 0;
+        const last = throughHour === undefined ? 23 : throughHour;
+        for (let hour = 0; hour <= last; hour++) {
+            const full = monitorHourKwh(year, month, day, hour);
+            if (throughHour !== undefined && hour === throughHour) {
+                total += full * minuteFraction;
+            } else {
+                total += full;
+            }
+        }
+        return total;
+    }
+
+    function monitorMoney(kwh) {
+        return (kwh * MONITOR_RATE).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    }
+
+    function updateSolarMonitor() {
+        const now = monitorParts(new Date());
+        const minuteFraction = now.minute / 60;
+        const todayKwh = monitorDayKwh(now.year, now.month, now.day, now.hour, minuteFraction);
+        let monthKwh = 0;
+        for (let day = 1; day < now.day; day++) {
+            monthKwh += monitorDayKwh(now.year, now.month, day);
+        }
+        monthKwh += todayKwh;
+        let yearKwh = 0;
+        for (let month = 1; month < now.month; month++) {
+            const days = new Date(Date.UTC(now.year, month, 0)).getUTCDate();
+            for (let day = 1; day <= days; day++) {
+                yearKwh += monitorDayKwh(now.year, month, day);
+            }
+        }
+        yearKwh += monthKwh;
+
+        const dailyEl = document.getElementById('daily-production');
+        const monthEl = document.getElementById('month-production');
+        const todayMoneyEl = document.getElementById('money-today');
+        const yearMoneyEl = document.getElementById('money-to-date');
+        if (dailyEl) dailyEl.textContent = todayKwh.toFixed(1);
+        if (monthEl) monthEl.textContent = Math.round(monthKwh).toLocaleString('en-US');
+        if (todayMoneyEl) todayMoneyEl.textContent = monitorMoney(todayKwh);
+        if (yearMoneyEl) yearMoneyEl.textContent = monitorMoney(yearKwh);
+
+        updateProductionChart(now);
+    }
+
+    function updateProductionChart(now) {
         const canvas = document.getElementById('production-chart');
         if (!canvas) return;
-        
+        const parentWidth = (canvas.parentElement && canvas.parentElement.clientWidth) || 800;
+        const cssWidth = Math.max(280, parentWidth);
+        const cssHeight = Math.max(220, Math.round(cssWidth * 0.38));
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.style.width = '100%';
+        canvas.style.height = cssHeight + 'px';
+        canvas.width = Math.round(cssWidth * dpr);
+        canvas.height = Math.round(cssHeight * dpr);
         const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // Account for padding in chart area
-        const chartPadding = { left: 60, right: 40, top: 20, bottom: 40 };
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const width = cssWidth;
+        const height = cssHeight;
+        const chartPadding = { left: 52, right: 16, top: 16, bottom: 36 };
         const chartWidth = width - chartPadding.left - chartPadding.right;
         const chartHeight = height - chartPadding.top - chartPadding.bottom;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
-        
-        // Get current NYC time
-        const currentHour = nycTime.getHours();
-        
-        // Update current time display
-        const timeDisplay = document.getElementById('current-time');
-        if (timeDisplay) {
-            timeDisplay.textContent = nycTime.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit',
-                hour12: true 
-            });
+
+        const solarData = [];
+        const useData = [];
+        let peak = 1;
+        for (let hour = 0; hour < 24; hour++) {
+            const produced = monitorHourKwh(now.year, now.month, now.day, hour);
+            const used = monitorHourUse(hour);
+            solarData.push(produced);
+            useData.push(used);
+            if (hour <= now.hour) peak = Math.max(peak, produced, used);
         }
-        
-        // Draw grid lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        const axisMax = Math.max(4, Math.ceil(peak));
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
         ctx.lineWidth = 1;
-        
-        // Vertical grid lines (hours)
-        for (let i = 0; i <= 24; i++) {
-            const x = chartPadding.left + (i / 24) * chartWidth;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '12px Inter, Arial, sans-serif';
+        ctx.textAlign = 'right';
+        for (let step = 0; step <= 4; step++) {
+            const value = (axisMax * (4 - step)) / 4;
+            const y = chartPadding.top + (step / 4) * chartHeight;
+            ctx.beginPath();
+            ctx.moveTo(chartPadding.left, y);
+            ctx.lineTo(width - chartPadding.right, y);
+            ctx.stroke();
+            ctx.fillText(value.toFixed(0) + ' kW', chartPadding.left - 8, y + 4);
+        }
+
+        ctx.textAlign = 'center';
+        for (let hour = 0; hour <= 24; hour += 3) {
+            const x = chartPadding.left + (hour / 24) * chartWidth;
+            const label = hour === 0 || hour === 24 ? '12a' : hour === 12 ? '12p' : hour > 12 ? (hour - 12) + 'p' : hour + 'a';
+            ctx.fillText(label, x, height - 10);
             ctx.beginPath();
             ctx.moveTo(x, chartPadding.top);
             ctx.lineTo(x, height - chartPadding.bottom);
             ctx.stroke();
         }
-        
-        // Horizontal grid lines (kW)
-        for (let i = 0; i <= 10; i++) {
-            const y = chartPadding.top + (i / 10) * chartHeight;
-            ctx.beginPath();
-            ctx.moveTo(chartPadding.left, y);
-            ctx.lineTo(width - chartPadding.right, y);
-            ctx.stroke();
+
+        const timeDisplay = document.getElementById('current-time');
+        if (timeDisplay) {
+            const suffix = now.hour >= 12 ? 'PM' : 'AM';
+            const hour12 = now.hour % 12 || 12;
+            timeDisplay.textContent = hour12 + ':' + String(now.minute).padStart(2, '0') + ' ' + suffix;
         }
-        
-        // Draw hour labels (below the chart) - moved outside chart boundaries
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        for (let i = 0; i <= 24; i += 3) {
-            const x = chartPadding.left + (i / 24) * chartWidth;
-            const timeLabel = i === 0 ? '12AM' : i === 12 ? '12PM' : i > 12 ? `${i-12}PM` : `${i}AM`;
-            ctx.fillText(timeLabel, x, height - 10);
-        }
-        
-        // Draw kWh labels (max 45 kWh) - moved outside chart boundaries with proper spacing
-        ctx.textAlign = 'right';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        // Show 45 kWh at top
-        ctx.fillText('45 kWh', chartPadding.left - 10, chartPadding.top + 15);
-        // Show 0 kWh at bottom
-        ctx.fillText('0 kWh', chartPadding.left - 10, height - chartPadding.bottom + 15);
-        // Show middle values
-        for (let i = 1; i <= 8; i += 1) {
-            const y = chartPadding.top + (i / 9) * chartHeight;
-            const kwhLabel = Math.round((9 - i) * 5) + ' kWh';
-            ctx.fillText(kwhLabel, chartPadding.left - 10, y + 4);
-        }
-        
-        // Date-based seed for consistent randomization
-        const now = new Date();
-        const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
-        const dateSeed = nycTime.getFullYear() * 10000 + (nycTime.getMonth() + 1) * 100 + nycTime.getDate();
-        
-        // Solar Production Data (Date-seeded randomization)
-        const solarData = [];
-        for (let hour = 0; hour < 24; hour++) {
-            let production = 0;
-            if (hour >= 6 && hour <= 20) {
-                const peakHour = 12;
-                const distanceFromPeak = Math.abs(hour - peakHour);
-                let maxProduction = 32; // Reduced from 35 for smoother curve
-                
-                // Higher production during 10AM-4PM
-                if (hour >= 10 && hour <= 16) {
-                    maxProduction = 38; // Reduced from 42 for smoother curve
-                }
-                
-                // Smoother curve with more gradual rise and fall
-                production = maxProduction * Math.exp(-(distanceFromPeak * distanceFromPeak) / 15); // Increased from 12 for smoother curve
-                
-                // More gradual rise in morning
-                if (hour < 12) {
-                    production *= (1 + (hour - 6) * 0.08); // Reduced from 0.1
-                }
-                // More gradual fade in afternoon
-                if (hour > 12) {
-                    production *= (1 - (hour - 12) * 0.04); // Reduced from 0.05
-                }
-                
-                // Add date-seeded randomness to middle hours (10AM-4PM)
-                if (hour >= 10 && hour <= 16) {
-                    const productionSeed = dateSeed + hour * 100; // Different seed for each hour
-                    const productionRandom = (productionSeed * 9301 + 49297) % 233280;
-                    const randomFactor = 0.9 + (productionRandom / 233280) * 0.2; // ±10% randomness
-                    production *= randomFactor;
-                }
-            }
-            solarData.push(production);
-        }
-        
-        // Consumption Data (Bell curve with peaks and randomness)
-        const consumptionData = [];
-        for (let hour = 0; hour < 24; hour++) {
-            let consumption = 0;
-            // Base consumption
-            consumption = 8 + Math.sin((hour - 6) * Math.PI / 12) * 3;
-            
-            // Morning peak (7-9 AM)
-            if (hour >= 7 && hour <= 9) {
-                consumption += 8 * Math.exp(-Math.pow(hour - 8, 2) / 2);
-            }
-            
-            // Evening peak (5-8 PM)
-            if (hour >= 17 && hour <= 20) {
-                consumption += 12 * Math.exp(-Math.pow(hour - 18.5, 2) / 2);
-            }
-            
-            // Add randomness to consumption (different seed than production)
-            const consumptionSeed = dateSeed + hour * 1000; // Different seed for consumption
-            const consumptionRandom = (consumptionSeed * 9301 + 49297) % 233280;
-            const consumptionRandomFactor = 0.85 + (consumptionRandom / 233280) * 0.3; // ±15% randomness
-            consumption *= consumptionRandomFactor;
-            
-            consumptionData.push(consumption);
-        }
-        
-        // Draw bars - side by side for each hour
+
         const hourWidth = chartWidth / 24;
-        const barWidth = hourWidth / 2 - 2; // Two bars per hour, thinner
-        
-        // Draw consumption bars (gold) and solar production (green) - only up to current hour
-        for (let i = 0; i < 24; i++) {
-            const hourX = chartPadding.left + (i / 24) * chartWidth;
-            
-            // Only show bars up to current hour
-            if (i <= currentHour) {
-                // Gold consumption bar (left)
-                ctx.fillStyle = '#f59e0b';
-                const consumption = consumptionData[i];
-                const consumptionHeight = (consumption / 45) * chartHeight; // Max 45 kWh
-                ctx.fillRect(hourX + 1, height - chartPadding.bottom - consumptionHeight, barWidth, consumptionHeight);
-                
-                // Green solar production bar (right)
-                ctx.fillStyle = '#10b981';
-                const production = solarData[i];
-                const productionHeight = (production / 45) * chartHeight; // Max 45 kWh
-                ctx.fillRect(hourX + barWidth + 3, height - chartPadding.bottom - productionHeight, barWidth, productionHeight);
-            }
+        const barWidth = hourWidth / 2 - 2;
+        for (let hour = 0; hour <= now.hour; hour++) {
+            const hourX = chartPadding.left + (hour / 24) * chartWidth;
+            const fraction = hour === now.hour ? (now.minute / 60) : 1;
+            ctx.fillStyle = '#f59e0b';
+            const useHeight = (useData[hour] * fraction / axisMax) * chartHeight;
+            ctx.fillRect(hourX + 1, height - chartPadding.bottom - useHeight, barWidth, useHeight);
+            ctx.fillStyle = '#10b981';
+            const solarHeight = (solarData[hour] * fraction / axisMax) * chartHeight;
+            ctx.fillRect(hourX + barWidth + 3, height - chartPadding.bottom - solarHeight, barWidth, solarHeight);
         }
-        
-        // Highlight current hour
-        if (currentHour >= 0 && currentHour < 24) {
-            const hourX = chartPadding.left + (currentHour / 24) * chartWidth;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(hourX, chartPadding.top, hourWidth, chartHeight);
-        }
+
+        const hourX = chartPadding.left + (now.hour / 24) * chartWidth;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hourX, chartPadding.top, hourWidth, chartHeight);
     }
 
     // Newsletter signup
@@ -1008,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize solar monitor
         updateSolarMonitor();
-        setInterval(updateSolarMonitor, 5000); // Update every 5 seconds
+        setInterval(updateSolarMonitor, 60000);
     });
 
     // Common questions: only one answer open at a time
