@@ -1265,6 +1265,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize solar monitor
         updateSolarMonitor();
         setInterval(updateSolarMonitor, 60000);
+
+        const monitorCarousel = document.querySelector('.monitor-carousel');
+        if (monitorCarousel) {
+            const track = monitorCarousel.querySelector('.monitor-track');
+            const slides = monitorCarousel.querySelectorAll('.monitor-slide');
+            const prev = monitorCarousel.querySelector('.monitor-prev');
+            const next = monitorCarousel.querySelector('.monitor-next');
+            let index = 0;
+            const showMonitor = () => {
+                track.style.transform = `translateX(${-index * 100}%)`;
+                prev.disabled = index === 0;
+                next.disabled = index >= slides.length - 1;
+            };
+            prev.addEventListener('click', () => {
+                if (index === 0) return;
+                index -= 1;
+                showMonitor();
+            });
+            next.addEventListener('click', () => {
+                if (index >= slides.length - 1) return;
+                index += 1;
+                showMonitor();
+            });
+            showMonitor();
+        }
     });
 
     // Common questions: only one answer open at a time
