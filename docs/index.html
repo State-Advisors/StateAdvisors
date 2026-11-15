@@ -23,7 +23,7 @@
                 <a href="#commercial" class="nav-link">Commercial</a>
                 <a href="#residential" class="nav-link">Residential</a>
                 <a href="./church.html" class="nav-link">Churches</a>
-                <a href="#solutions" class="nav-link">Solutions</a>
+                <a href="#commercial" class="nav-link">Solutions</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <a href="./careers.html" class="nav-link">Careers</a>
                 <a href="./about.html" class="nav-link">About</a>
@@ -58,8 +58,8 @@
                     </div>
                 </div>
                 <div class="hero-cta">
-                    <a href="#contact" class="btn btn-primary">Get Free Commercial Quote</a>
-                    <a href="#solutions" class="btn btn-secondary">Explore Solutions</a>
+                    <a href="./commercial-quote.html" class="btn btn-primary">Get Free Commercial Quote</a>
+                    <a href="#commercial" class="btn btn-secondary">Explore Solutions</a>
                 </div>
             </div>
             <div class="hero-image">
@@ -83,7 +83,6 @@
                         <div class="bill-half">
                             <div class="savings-highlight">
                                 <span class="savings-text">SAVE $23,130/YEAR</span>
-                                <span class="solar-text">WITH SOLAR</span>
                             </div>
                         </div>
                     </div>
@@ -178,7 +177,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Why Commercial Solar?</h2>
-                <p>Transform your business operations with solar energy solutions designed for scale and efficiency.</p>
+                <p>Transform your business operations with solar energy solutions designed for scale and efficiency. The work includes rooftop, ground-mount, and carport systems, with storage and financing when the building needs them. A commercial project has run about $145.2K in annual savings.</p>
             </div>
             <div class="benefits-grid">
                 <div class="benefit-card" data-interest="Immediate ROI">
@@ -216,6 +215,13 @@
                     <h3>Energy Security</h3>
                     <p>Ensure business continuity with backup power and grid independence during outages.</p>
                 </div>
+                <div class="benefit-card" data-interest="Statewide energy rebate programs">
+                    <div class="benefit-icon">
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <h3>Statewide Energy Rebate Programs</h3>
+                    <p>State rebates can lower the cost. We include the ones that apply in your proposal.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -225,16 +231,9 @@
         <div class="container">
             <div class="section-header">
                 <h2>Why Residential Solar?</h2>
-                <p>Transform your home with solar energy and unlock significant tax benefits in New York State and other US territories.</p>
+                <p>Transform your home with solar energy and unlock significant tax benefits in New York State and other US territories. Home systems can include battery backup and EV charging. On average, more than $2,780 in annual savings.</p>
             </div>
-            <div class="residential-benefits-grid">
-                <div class="residential-benefit-card">
-                    <div class="residential-benefit-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <h3>NYSERDA Benefits</h3>
-                    <p>Access New York State Energy Research and Development Authority incentives designed to make solar more affordable for homeowners.</p>
-                </div>
+            <div class="residential-benefits-grid residential-benefits-two">
                 <div class="residential-benefit-card">
                     <div class="residential-benefit-icon">
                         <i class="fas fa-percentage"></i>
@@ -242,14 +241,7 @@
                     <h3>Federal Investment Tax Credit (FITC)</h3>
                     <p>Take advantage of federal tax credits that significantly reduce your solar installation costs.</p>
                 </div>
-                <div class="residential-benefit-card">
-                    <div class="residential-benefit-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Property Tax Abatement (PTA)</h3>
-                    <p>Benefit from property tax exemptions that protect your investment while increasing your home's value.</p>
-                </div>
-                <div class="residential-benefit-card instant-quote-card" onclick="scrollToContact()">
+                <a href="./residential-quote.html" class="residential-benefit-card instant-quote-card">
                     <div class="instant-quote-content">
                         <div class="residential-benefit-icon">
                             <i class="fas fa-calculator"></i>
@@ -262,7 +254,7 @@
                     <div class="click-indicator">
                         <i class="fas fa-arrow-right"></i>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </section>
@@ -402,6 +394,7 @@
                                 <div class="result-item">
                                     <span class="result-label">Monthly Savings Range:</span>
                                     <span class="result-value" id="monthly-savings-range">$0 - $0</span>
+                                    <div class="savings-note">In year one</div>
                                 </div>
                                 <div class="result-item">
                                     <span class="result-label">30-Year Anticipated Savings:</span>
@@ -431,6 +424,7 @@
                                 </div>
                                 <div class="action-right">
                                     <button class="calculator-btn primary" onclick="getFullQuote()">Get Full Quote</button>
+                                    <p class="quote-nudge">Please complete adding your information.</p>
                                 </div>
                             </div>
                         </div>
@@ -439,66 +433,6 @@
             </div>
         </div>
     </section>
-
-    <!-- Solutions Section -->
-    <section id="solutions" class="solutions">
-        <div class="container">
-            <div class="section-header">
-                <h2>Complete Solar Solutions</h2>
-                <p>From design to installation to maintenance, we handle every aspect of your solar journey.</p>
-            </div>
-            <div class="solutions-grid">
-                <div class="solution-card commercial">
-                    <div class="solution-header">
-                        <i class="fas fa-industry"></i>
-                        <h3>Commercial Solar</h3>
-                    </div>
-                    <ul>
-                        <li>Large-scale rooftop installations</li>
-                        <li>Ground-mounted solar farms</li>
-                        <li>Carport and canopy systems</li>
-                        <li>Energy storage integration</li>
-                        <li>Custom financing solutions</li>
-                        <li><strong>$145.2K annual savings</strong></li>
-                    </ul>
-                    <a href="#contact" class="btn btn-outline">Learn More</a>
-                </div>
-                <div class="solution-card residential">
-                    <div class="solution-header">
-                        <i class="fas fa-home"></i>
-                        <h3>Residential Solar</h3>
-                    </div>
-                    <ul>
-                        <li>Home solar panel systems</li>
-                        <li>Battery backup solutions</li>
-                        <li>EV charging integration</li>
-                        <li>Smart home compatibility</li>
-                        <li>Net metering optimization</li>
-                        <li><strong>On average more than $2,780 in annual savings</strong></li>
-                    </ul>
-                    <a href="#contact" class="btn btn-outline">Learn More</a>
-                </div>
-                <div class="solution-card services">
-                    <div class="solution-header">
-                        <i class="fas fa-tools"></i>
-                        <h3>Support Services & Investment</h3>
-                    </div>
-                    <ul>
-                        <li>24/7 monitoring & maintenance</li>
-                        <li>Performance optimization</li>
-                        <li>Warranty management</li>
-                        <li>Energy analytics</li>
-                        <li>System upgrades</li>
-                        <li><strong>Investment opportunities</strong> for nonprofits</li>
-                        <li>Community solar investment programs</li>
-                    </ul>
-                    <a href="#contact" class="btn btn-outline">Learn More</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
 
     <!-- Portfolio Section -->
     <section class="portfolio">
@@ -837,8 +771,8 @@
                     <ul>
                         <li><a href="#commercial">Commercial Solar</a></li>
                         <li><a href="#residential">Residential Solar</a></li>
-                        <li><a href="#solutions">Energy Storage</a></li>
-                        <li><a href="#solutions">EV Charging</a></li>
+                        <li><a href="#residential">Energy Storage</a></li>
+                        <li><a href="#residential">EV Charging</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">

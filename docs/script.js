@@ -806,14 +806,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     };
 
+    function sendCalculatorNotice(fields, crmPayload) {
+        const body = new FormData();
+        Object.entries(fields).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
+                body.append(key, value);
+            }
+        });
+        const allowed = new Set([
+            'https://app.statesolaradvisors.com',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000'
+        ]);
+        const rawPortal = (window.STATEADVISORS && window.STATEADVISORS.portalUrl || '').replace(/\/$/, '');
+        const portalBase = allowed.has(rawPortal) ? rawPortal : '';
+        const formspreePromise = fetch('https://formspree.io/f/xwpqqoqp', {
+            method: 'POST',
+            body,
+            headers: { 'Accept': 'application/json' }
+        });
+        const crmPromise = portalBase
+            ? fetch(`${portalBase}/api/ingest/website`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(crmPayload)
+            }).catch(() => null)
+            : Promise.resolve(null);
+        return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
+            if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
+            throw new Error('Calculator notice was not delivered');
+        });
+    }
+
     window.scheduleCall = function() {
-        const phone = document.getElementById('phone-input').value;
+        const phone = document.getElementById('phone-input').value.trim();
         if (!phone) {
             alert('Please enter your phone number');
             return;
         }
-        
-        // Create schedule modal
+
+        const leadData = JSON.parse(localStorage.getItem('solarLeadData') || '{}');
+        leadData.phone = phone;
+        localStorage.setItem('solarLeadData', JSON.stringify(leadData));
+
+        sendCalculatorNotice({
+            _subject: 'Calculator call request',
+            form_type: 'calculator_call',
+            phone,
+            email: leadData.email || '',
+            address: leadData.address || '',
+            state: leadData.state || '',
+            zipcode: leadData.zipCode || '',
+            monthly_bill: leadData.billAmount || '',
+            monthly_savings: leadData.monthlySavingsRange || ''
+        }, {
+            website: '',
+            fullName: leadData.email || 'Calculator lead',
+            email: leadData.email || '',
+            phone,
+            street: leadData.address || '',
+            state: leadData.state || '',
+            zip: leadData.zipCode || '',
+            monthlyBill: leadData.billAmount || '',
+            message: 'Phone received from the estimate. A call time may follow.',
+            leadSource: 'website_calculator_phone'
+        }).catch(() => {
+            console.warn('Calculator phone notice was not delivered');
+        });
+
         showScheduleModal();
     };
 
@@ -875,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="schedule-modal-close" onclick="closeScheduleModal()">&times;</button>
                 </div>
                 <div class="schedule-modal-body">
-                    <p>Select a time that works best for you. We'll send a calendar reminder to your email.</p>
+                    <p>Select a time. We confirm by email and call the number you entered.</p>
                     <div class="schedule-slots">
                         ${Object.keys(groupedSlots).map(day => `
                             <div class="schedule-day">
@@ -899,39 +962,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function selectTimeSlot(selectedTime) {
         const leadData = JSON.parse(localStorage.getItem('solarLeadData') || '{}');
-        const phone = document.getElementById('phone-input').value;
-        const email = leadData.email;
-        
-        // Update lead data
+        const phone = (document.getElementById('phone-input').value || leadData.phone || '').trim();
+        const email = leadData.email || '';
+        const selectedDate = new Date(selectedTime);
+        const timeString = selectedDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        const dateString = selectedDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric'
+        });
+        const when = `${dateString} at ${timeString}`;
+
         leadData.phone = phone;
         leadData.callScheduled = true;
         leadData.scheduledTime = selectedTime;
         localStorage.setItem('solarLeadData', JSON.stringify(leadData));
-        
-        // Close modal
         closeScheduleModal();
-        
-        // Show confirmation
-        const selectedDate = new Date(selectedTime);
-        const timeString = selectedDate.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        });
-        const dateString = selectedDate.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'short', 
-            day: 'numeric' 
-        });
-        
-        alert(`Perfect! Your call is scheduled for ${dateString} at ${timeString}.\n\nWe'll send a calendar reminder to ${email} and call you at ${phone}.\n\nThank you for choosing StateAdvisors Solar!`);
-        
-        // In real implementation, send calendar invite and notification
-        console.log('Call scheduled:', {
-            email: email,
-            phone: phone,
-            time: selectedTime,
-            leadData: leadData
+
+        sendCalculatorNotice({
+            _subject: 'Calculator call time',
+            form_type: 'calculator_call_time',
+            phone,
+            email,
+            address: leadData.address || '',
+            state: leadData.state || '',
+            zipcode: leadData.zipCode || '',
+            monthly_bill: leadData.billAmount || '',
+            requested_call: when
+        }, {
+            website: '',
+            fullName: email || 'Calculator lead',
+            email,
+            phone,
+            street: leadData.address || '',
+            state: leadData.state || '',
+            zip: leadData.zipCode || '',
+            monthlyBill: leadData.billAmount || '',
+            message: `Requested call: ${when}`,
+            leadSource: 'website_calculator_call'
+        }).then(() => {
+            alert(`We have ${when}. We'll call ${phone} and confirm by email.`);
+        }).catch(() => {
+            alert('We saved the time on this page, but the email did not send. Please call (347) 308-4256.');
         });
     }
 
@@ -941,6 +1017,9 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.remove();
         }
     }
+
+    window.selectTimeSlot = selectTimeSlot;
+    window.closeScheduleModal = closeScheduleModal;
 
     window.getFullQuote = function() {
         // Get stored lead data
@@ -969,7 +1048,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (streetInput && leadData.address) streetInput.value = leadData.address;
             if (stateInput && leadData.state) stateInput.value = leadData.state;
             if (zipcodeInput && leadData.zipCode) zipcodeInput.value = leadData.zipCode;
-            if (phoneInput && leadData.phone) phoneInput.value = leadData.phone;
+            const typedPhone = document.getElementById('phone-input');
+            const phoneValue = leadData.phone || (typedPhone ? typedPhone.value.trim() : '');
+            if (phoneInput && phoneValue) phoneInput.value = phoneValue;
             if (monthlyBillInput && leadData.billAmount) monthlyBillInput.value = `$${leadData.billAmount}`;
             
             // Pre-fill message with calculator results
@@ -1198,3 +1279,307 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const detailsForm = document.getElementById('quote-details-form');
+    const timeForm = document.getElementById('quote-time-form');
+    if (!detailsForm && !timeForm) return;
+
+    const FORMSPREE = 'https://formspree.io/f/xwpqqoqp';
+    const STORAGE_KEY = 'ssa-quote-draft';
+    const ALLOWED_PORTALS = new Set([
+        'https://app.statesolaradvisors.com',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ]);
+    const rawPortal = (window.STATEADVISORS && window.STATEADVISORS.portalUrl || '').replace(/\/$/, '');
+    const portalBase = ALLOWED_PORTALS.has(rawPortal) ? rawPortal : '';
+
+    function readDraft() {
+        try {
+            return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function writeDraft(draft) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    }
+
+    function valueOf(id) {
+        const field = document.getElementById(id);
+        return field ? String(field.value || '').trim() : '';
+    }
+
+    function markEmpty(fields) {
+        let valid = true;
+        fields.forEach(field => {
+            if (!field) return;
+            if (!String(field.value || '').trim()) {
+                valid = false;
+                field.style.borderColor = '#ef4444';
+            } else {
+                field.style.borderColor = '#e5e7eb';
+            }
+        });
+        return valid;
+    }
+
+    function showError(form, message) {
+        let note = form.querySelector('.quote-form-error');
+        if (!note) {
+            note = document.createElement('p');
+            note.className = 'quote-form-error';
+            form.appendChild(note);
+        }
+        note.hidden = false;
+        note.textContent = message;
+    }
+
+    function nycDateParts(date) {
+        const fmt = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const parts = Object.fromEntries(fmt.formatToParts(date).map(part => [part.type, part.value]));
+        return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day) };
+    }
+
+    function isoFromParts(parts) {
+        return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+    }
+
+    function addDays(parts, days) {
+        const utc = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+        utc.setUTCDate(utc.getUTCDate() + days);
+        return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() };
+    }
+
+    function weekdayOf(iso) {
+        const [year, month, day] = iso.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    }
+
+    function postLead(fields, crmPayload) {
+        const body = new FormData();
+        Object.entries(fields).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
+                body.append(key, value);
+            }
+        });
+        const formspreePromise = fetch(FORMSPREE, {
+            method: 'POST',
+            body,
+            headers: { 'Accept': 'application/json' }
+        });
+        const crmPromise = portalBase
+            ? fetch(`${portalBase}/api/ingest/website`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(crmPayload)
+            }).catch(() => null)
+            : Promise.resolve(null);
+        return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
+            if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
+            throw new Error('Quote was not delivered');
+        });
+    }
+
+    function fillCallTimes(select) {
+        for (let minutes = 9 * 60; minutes <= 18 * 60; minutes += 30) {
+            const hour24 = Math.floor(minutes / 60);
+            const minute = minutes % 60;
+            const suffix = hour24 >= 12 ? 'PM' : 'AM';
+            const hour12 = hour24 % 12 || 12;
+            const label = `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+            const option = document.createElement('option');
+            option.value = label;
+            option.textContent = label;
+            select.appendChild(option);
+        }
+    }
+
+    if (detailsForm) {
+        const kind = detailsForm.dataset.quoteKind;
+        const saved = readDraft();
+        if (saved && saved.kind === kind) {
+            const restore = {
+                name: saved.name,
+                email: saved.email,
+                street: saved.street,
+                town: saved.town,
+                state: saved.state,
+                zipcode: saved.zip,
+                company: saved.company,
+                phone: saved.phone,
+                'monthly-bill': saved.monthlyBill,
+                message: saved.message
+            };
+            Object.entries(restore).forEach(([id, value]) => {
+                const field = document.getElementById(id);
+                if (field && value) field.value = value;
+            });
+        }
+
+        detailsForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const required = ['name', 'email', 'street', 'town', 'state', 'zipcode'].map(id => document.getElementById(id));
+            if (!markEmpty(required)) {
+                showError(detailsForm, 'Please fill in all required fields.');
+                return;
+            }
+            const draft = {
+                kind,
+                name: valueOf('name'),
+                email: valueOf('email'),
+                street: valueOf('street'),
+                town: valueOf('town'),
+                state: valueOf('state'),
+                zip: valueOf('zipcode'),
+                company: valueOf('company'),
+                phone: valueOf('phone'),
+                monthlyBill: valueOf('monthly-bill'),
+                message: valueOf('message'),
+                scheduled: false
+            };
+            const button = detailsForm.querySelector('button[type="submit"]');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            const commercial = kind === 'commercial';
+            postLead({
+                _subject: commercial ? 'Commercial quote request' : 'Residential quote request',
+                form_type: commercial ? 'commercial_quote' : 'residential_quote',
+                name: draft.name,
+                email: draft.email,
+                street: draft.street,
+                town: draft.town,
+                state: draft.state,
+                zipcode: draft.zip,
+                company: draft.company,
+                phone: draft.phone,
+                monthly_bill: draft.monthlyBill,
+                message: draft.message,
+                website: valueOf('website')
+            }, {
+                website: valueOf('website'),
+                fullName: draft.name,
+                email: draft.email,
+                phone: draft.phone,
+                street: draft.street,
+                city: draft.town,
+                state: draft.state,
+                zip: draft.zip,
+                company: draft.company,
+                monthlyBill: draft.monthlyBill,
+                message: draft.message,
+                leadSource: commercial ? 'website_commercial_quote' : 'website_residential_quote'
+            }).then(() => {
+                writeDraft(draft);
+                window.location.href = detailsForm.dataset.next;
+            }).catch(() => {
+                showError(detailsForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
+                button.disabled = false;
+                button.textContent = original;
+            });
+        });
+    }
+
+    if (timeForm) {
+        const kind = timeForm.dataset.quoteKind;
+        const draft = readDraft();
+        if (!draft || draft.kind !== kind || !draft.name || !draft.email) {
+            window.location.replace(timeForm.dataset.back);
+            return;
+        }
+
+        const phoneAsk = document.getElementById('quote-phone-ask');
+        const phoneInput = document.getElementById('call-phone');
+        const callDate = document.getElementById('call-date');
+        const callTime = document.getElementById('call-time');
+        const done = document.getElementById('quote-time-done');
+
+        if (draft.scheduled) {
+            timeForm.hidden = true;
+            done.hidden = false;
+            return;
+        }
+
+        if (!draft.phone) {
+            phoneAsk.hidden = false;
+            phoneInput.required = true;
+        }
+
+        fillCallTimes(callTime);
+        const today = nycDateParts(new Date());
+        callDate.min = isoFromParts(addDays(today, 1));
+        callDate.max = isoFromParts(addDays(today, 21));
+
+        timeForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const phoneNow = draft.phone || valueOf('call-phone');
+            const needed = [callDate, callTime];
+            if (!draft.phone) needed.unshift(phoneInput);
+            if (!markEmpty(needed)) {
+                showError(timeForm, draft.phone ? 'Choose a date and time for the call.' : 'Add your phone number, then choose a date and time.');
+                return;
+            }
+            if (weekdayOf(callDate.value) === 0) {
+                callDate.style.borderColor = '#ef4444';
+                showError(timeForm, 'Choose a Monday through Saturday.');
+                return;
+            }
+            const when = `${callDate.value} at ${callTime.value} (Eastern)`;
+            const button = timeForm.querySelector('button[type="submit"]');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            const commercial = kind === 'commercial';
+            postLead({
+                _subject: commercial ? 'Commercial quote call time' : 'Residential quote call time',
+                form_type: commercial ? 'commercial_quote_call' : 'residential_quote_call',
+                name: draft.name,
+                email: draft.email,
+                street: draft.street,
+                town: draft.town,
+                state: draft.state,
+                zipcode: draft.zip,
+                company: draft.company,
+                phone: phoneNow,
+                monthly_bill: draft.monthlyBill,
+                message: draft.message,
+                requested_call: when
+            }, {
+                website: '',
+                fullName: draft.name,
+                email: draft.email,
+                phone: phoneNow,
+                street: draft.street,
+                city: draft.town,
+                state: draft.state,
+                zip: draft.zip,
+                company: draft.company,
+                monthlyBill: draft.monthlyBill,
+                message: [draft.message, `Requested call: ${when}`].filter(Boolean).join('\n'),
+                leadSource: commercial ? 'website_commercial_quote_call' : 'website_residential_quote_call'
+            }).then(() => {
+                draft.phone = phoneNow;
+                draft.scheduled = true;
+                draft.requestedCall = when;
+                writeDraft(draft);
+                timeForm.hidden = true;
+                done.hidden = false;
+            }).catch(() => {
+                showError(timeForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
+                button.disabled = false;
+                button.textContent = original;
+            });
+        });
+    }
+});

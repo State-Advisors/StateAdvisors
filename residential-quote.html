@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Quote - Solar Solutions</title>
+    <meta name="description" content="Request a residential solar quote from Solar Solutions.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="logo-removebg-preview.png" alt="Solar Solutions logo" class="logo-image">
+                <span class="brand-name"><span class="brand-strong">Solar</span> Solutions</span>
+            </div>
+            <div class="nav-menu">
+                <a href="./index.html#commercial" class="nav-link">Commercial</a>
+                <a href="./index.html#residential" class="nav-link">Residential</a>
+                <a href="./church.html" class="nav-link">Churches</a>
+                <a href="./index.html#contact" class="nav-link">Contact</a>
+                <a href="./careers.html" class="nav-link">Careers</a>
+                <a href="./about.html" class="nav-link">About</a>
+                <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
+            </div>
+            <div class="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+    <main class="quote-page-main">
+        <div class="quote-sheet">
+            <h1>Instant quote</h1>
+            <p class="quote-lead">Tell us about the home.</p>
+            <form id="quote-details-form" data-quote-kind="residential" data-next="./residential-call.html" action="https://formspree.io/f/xwpqqoqp" method="POST">
+            <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+                <label for="website">Website</label>
+                <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="name">Contact Name</label>
+                <input type="text" id="name" name="name" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="street">Street Address</label>
+                <input type="text" id="street" name="street" required autocomplete="street-address">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="town">Town/City</label>
+                    <input type="text" id="town" name="town" required autocomplete="address-level2">
+                </div>
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" required autocomplete="address-level1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="zipcode">Zip Code</label>
+                <input type="text" id="zipcode" name="zipcode" required inputmode="numeric" autocomplete="postal-code">
+            </div>
+            <div class="form-group">
+                <label for="company">Company Name</label>
+                <input type="text" id="company" name="company" autocomplete="organization">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" autocomplete="tel">
+            </div>
+            <div class="form-group">
+                <label for="monthly-bill">Average Monthly Bill</label>
+                <input type="text" id="monthly-bill" name="monthly-bill" placeholder="$">
+            </div>
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="4" maxlength="2000" placeholder="Timeline, roof, or questions"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Continue</button>
+            <p class="form-quiet">We use this to prepare your proposal and contact you.</p>
+            </form>
+        </div>
+        <figure class="quote-photo">
+            <img src="community-home-solar.jpg" alt="A house seen from the front lawn, with solar panels across the roof">
+        </figure>
+    </main>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="logo-removebg-preview.png" alt="StateAdvisors Solar Logo" class="logo-image-footer">
+                        <span>StateAdvisors Solar</span>
+                    </div>
+                    <p>Transforming businesses and homes with sustainable solar energy solutions.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="customer-care.html">Customer Care</a></li>
+                        <li><a href="process.html">Our Process</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> (347) 308-4256</p>
+                        <p><i class="fas fa-envelope"></i> StateSolarAdvisors@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Serving The United States</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 StateAdvisors Solar. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script>
+      window.STATEADVISORS = window.STATEADVISORS || {
+        portalUrl: "https://app.statesolaradvisors.com"
+      };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

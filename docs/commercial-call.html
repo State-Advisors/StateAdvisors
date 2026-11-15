@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose a Call Time - Solar Solutions</title>
+    <meta name="description" content="Choose a date and time for a commercial solar quote call.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="logo-removebg-preview.png" alt="Solar Solutions logo" class="logo-image">
+                <span class="brand-name"><span class="brand-strong">Solar</span> Solutions</span>
+            </div>
+            <div class="nav-menu">
+                <a href="./index.html#commercial" class="nav-link">Commercial</a>
+                <a href="./index.html#residential" class="nav-link">Residential</a>
+                <a href="./church.html" class="nav-link">Churches</a>
+                <a href="./index.html#contact" class="nav-link">Contact</a>
+                <a href="./careers.html" class="nav-link">Careers</a>
+                <a href="./about.html" class="nav-link">About</a>
+                <a href="https://app.statesolaradvisors.com/login" class="nav-link">Login</a>
+            </div>
+            <div class="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+    <main class="quote-page-main">
+        <div class="quote-sheet quote-sheet-time">
+            <form id="quote-time-form" data-quote-kind="commercial" data-back="./commercial-quote.html" action="https://formspree.io/f/xwpqqoqp" method="POST">
+                <h1>Choose a call time</h1>
+                <p class="quote-lead">Pick a day and a time. We confirm by email.</p>
+                <div class="quote-phone-ask" id="quote-phone-ask" hidden>
+                    <div class="form-group">
+                        <label for="call-phone">Phone Number</label>
+                        <input type="tel" id="call-phone" name="phone" autocomplete="tel">
+                    </div>
+                </div>
+                <div class="quote-time-grid">
+                    <div class="form-group">
+                        <label for="call-date">Call date</label>
+                        <input type="date" id="call-date" name="call-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="call-time">Call time</label>
+                        <select id="call-time" name="call-time" required>
+                            <option value="">Select</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Send call time</button>
+                <p class="form-quiet">The time comes to our inbox with your request.</p>
+            </form>
+            <div class="quote-done" id="quote-time-done" hidden>
+                <h1>We have that time</h1>
+                <p class="quote-lead">We'll confirm by email.</p>
+            </div>
+        </div>
+        <figure class="quote-photo">
+            <img src="Solar%20Photos/pic%203.jpg" alt="Commercial solar canopies covering a parking lot beside an office building">
+        </figure>
+    </main>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="logo-removebg-preview.png" alt="StateAdvisors Solar Logo" class="logo-image-footer">
+                        <span>StateAdvisors Solar</span>
+                    </div>
+                    <p>Transforming businesses and homes with sustainable solar energy solutions.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="customer-care.html">Customer Care</a></li>
+                        <li><a href="process.html">Our Process</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="careers.html">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> (347) 308-4256</p>
+                        <p><i class="fas fa-envelope"></i> StateSolarAdvisors@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Serving The United States</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 StateAdvisors Solar. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script>
+      window.STATEADVISORS = window.STATEADVISORS || {
+        portalUrl: "https://app.statesolaradvisors.com"
+      };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
