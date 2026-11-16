@@ -846,27 +846,31 @@ body {
 
 .process-steps {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    max-width: 980px;
+    margin: 0 auto;
 }
 
 .step {
-    text-align: center;
-    padding: 2rem;
+    text-align: left;
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem 1.4rem 1.35rem;
 }
 
 .step-number {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     background: linear-gradient(135deg, #2563eb, #3b82f6);
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    margin: 0 auto 1.5rem;
+    margin: 0 0 1rem;
 }
 
 .step h3 {
@@ -2674,6 +2678,32 @@ a.instant-quote-card {
 
 .quote-done h1 {
     margin-bottom: 0.6rem;
+}
+
+.quote-sheet-time:has(#quote-time-done:not([hidden])) {
+    max-width: 680px;
+    text-align: left;
+}
+
+.quote-received {
+    font-size: 1.15rem;
+    color: #0f172a;
+    margin-bottom: 1.35rem;
+}
+
+.quote-study {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1.15rem;
+}
+
+.quote-study p {
+    color: #334155;
+    line-height: 1.65;
+    margin-bottom: 0.9rem;
+}
+
+.quote-study p:last-child {
+    margin-bottom: 0;
 }
 
 .quote-photo {
