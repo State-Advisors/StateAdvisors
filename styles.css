@@ -1563,6 +1563,14 @@ a.instant-quote-card {
     color: #1e293b;
 }
 
+.about-text h2.role-title {
+    margin-top: 2.5rem;
+}
+
+.about-text h2.role-title:first-child {
+    margin-top: 0;
+}
+
 .about-text h3 {
     font-size: 1.5rem;
     font-weight: 600;
