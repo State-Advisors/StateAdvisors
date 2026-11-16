@@ -2719,6 +2719,20 @@ a.instant-quote-card {
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
 }
 
+.quote-photo figcaption,
+.photo-credit {
+    margin-top: 0.45rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #94a3b8;
+    text-align: right;
+}
+
+.quote-photo figcaption a,
+.photo-credit a {
+    color: inherit;
+}
+
 @media (max-width: 640px) {
     .quote-time-grid {
         grid-template-columns: 1fr;
