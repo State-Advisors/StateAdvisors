@@ -1339,7 +1339,8 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function () {
     const detailsForm = document.getElementById('quote-details-form');
     const timeForm = document.getElementById('quote-time-form');
-    if (!detailsForm && !timeForm) return;
+    const storageForm = document.getElementById('storage-contact-form');
+    if (!detailsForm && !timeForm && !storageForm) return;
 
     const FORMSPREE = 'https://formspree.io/f/xwpqqoqp';
     const STORAGE_KEY = 'ssa-quote-draft';
@@ -1482,6 +1483,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (field && value) field.value = value;
             });
         }
+        if (new URLSearchParams(window.location.search).get('interest') === 'ev') {
+            const message = document.getElementById('message');
+            const evMessage = kind === 'commercial'
+                ? "We're looking into charging at the property. People already come here to work and to visit. Chargers where they park would make this an easier place to choose."
+                : "I'm looking into charging at home. The car is already here every night, and I want it full when I leave in the morning. A charger at the house would make that ordinary.";
+            if (message && !/charg/i.test(message.value)) message.value = evMessage;
+        }
 
         detailsForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -1509,8 +1517,11 @@ document.addEventListener('DOMContentLoaded', function () {
             button.disabled = true;
             button.textContent = 'Sending...';
             const commercial = kind === 'commercial';
+            const evInterest = new URLSearchParams(window.location.search).get('interest') === 'ev';
             postLead({
-                _subject: commercial ? 'Commercial quote request' : 'Residential quote request',
+                _subject: evInterest
+                    ? (commercial ? 'Commercial EV charging' : 'Residential EV charging')
+                    : (commercial ? 'Commercial quote request' : 'Residential quote request'),
                 form_type: commercial ? 'commercial_quote' : 'residential_quote',
                 name: draft.name,
                 email: draft.email,
@@ -1535,7 +1546,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 company: draft.company,
                 monthlyBill: draft.monthlyBill,
                 message: draft.message,
-                leadSource: commercial ? 'website_commercial_quote' : 'website_residential_quote'
+                leadSource: evInterest
+                    ? (commercial ? 'website_commercial_ev' : 'website_residential_ev')
+                    : (commercial ? 'website_commercial_quote' : 'website_residential_quote')
             }).then(() => {
                 writeDraft(draft);
                 window.location.href = detailsForm.dataset.next;
@@ -1597,8 +1610,11 @@ document.addEventListener('DOMContentLoaded', function () {
             button.disabled = true;
             button.textContent = 'Sending...';
             const commercial = kind === 'commercial';
+            const evCall = /charg/i.test(draft.message || '');
             postLead({
-                _subject: commercial ? 'Commercial quote call time' : 'Residential quote call time',
+                _subject: evCall
+                    ? (commercial ? 'Commercial EV charging call time' : 'Residential EV charging call time')
+                    : (commercial ? 'Commercial quote call time' : 'Residential quote call time'),
                 form_type: commercial ? 'commercial_quote_call' : 'residential_quote_call',
                 name: draft.name,
                 email: draft.email,
@@ -1633,6 +1649,49 @@ document.addEventListener('DOMContentLoaded', function () {
                 done.hidden = false;
             }).catch(() => {
                 showError(timeForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
+                button.disabled = false;
+                button.textContent = original;
+            });
+        });
+    }
+
+    if (storageForm) {
+        const done = document.getElementById('storage-done');
+        storageForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('storage-name');
+            const email = document.getElementById('storage-email');
+            const phone = document.getElementById('storage-phone');
+            const message = document.getElementById('storage-message');
+            if (!markEmpty([name, email])) {
+                showError(storageForm, 'Please add your name and email.');
+                return;
+            }
+            const button = storageForm.querySelector('button[type="submit"]');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            const note = [message && message.value.trim(), 'Asked for an expert to explain batteries.'].filter(Boolean).join('\n');
+            postLead({
+                _subject: 'Battery explanation request',
+                form_type: 'energy_storage',
+                name: name.value.trim(),
+                email: email.value.trim(),
+                phone: phone ? phone.value.trim() : '',
+                message: note,
+                website: valueOf('website')
+            }, {
+                website: valueOf('website'),
+                fullName: name.value.trim(),
+                email: email.value.trim(),
+                phone: phone ? phone.value.trim() : '',
+                message: note,
+                leadSource: 'website_energy_storage'
+            }).then(() => {
+                storageForm.hidden = true;
+                if (done) done.hidden = false;
+            }).catch(() => {
+                showError(storageForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
                 button.disabled = false;
                 button.textContent = original;
             });

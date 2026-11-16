@@ -2722,4 +2722,147 @@ a.instant-quote-card {
         overflow-y: auto;
         z-index: 950;
     }
+}
+
+.info-page {
+    padding: 112px 0 72px;
+    background: #f8fafc;
+}
+
+.info-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.info-page h1 {
+    font-size: 2.6rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+    margin-bottom: 0.75rem;
+}
+
+.info-lead {
+    font-size: 1.15rem;
+    color: #475569;
+    margin-bottom: 2.25rem;
+}
+
+.info-block {
+    padding: 1.35rem 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.info-block h2 {
+    font-size: 1.25rem;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+}
+
+.info-block p {
+    color: #334155;
+    font-size: 1.05rem;
+    line-height: 1.65;
+}
+
+.info-contact {
+    margin-top: 2.5rem;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    padding: 1.75rem;
+}
+
+.info-contact h2 {
+    font-size: 1.5rem;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+}
+
+.info-contact > p {
+    color: #475569;
+    margin-bottom: 1.25rem;
+}
+
+.ev-page .info-wrap {
+    max-width: 1040px;
+}
+
+.ev-choice {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.ev-choice-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 420px;
+    padding: 2.25rem;
+    border-radius: 22px;
+    background: #fff;
+    color: #0f172a;
+    text-decoration: none;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.ev-choice-card:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6;
+}
+
+.ev-kicker {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 0.75rem;
+}
+
+.ev-choice-card h2 {
+    font-size: 2.4rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.9rem;
+}
+
+.ev-choice-card p {
+    font-size: 1.15rem;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.ev-choice-card-commercial {
+    background: #0f172a;
+    color: #fff;
+}
+
+.ev-choice-card-commercial .ev-kicker {
+    color: #93c5fd;
+}
+
+.ev-choice-card-commercial p {
+    color: #e2e8f0;
+}
+
+.ev-choice-card-commercial:hover {
+    border-color: #93c5fd;
+}
+
+@media (max-width: 800px) {
+    .ev-choice {
+        grid-template-columns: 1fr;
+    }
+
+    .ev-choice-card {
+        min-height: 280px;
+    }
+
+    .ev-choice-card h2 {
+        font-size: 2rem;
+    }
 } 
