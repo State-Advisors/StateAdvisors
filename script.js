@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="schedule-modal-close" onclick="closeScheduleModal()">&times;</button>
                 </div>
                 <div class="schedule-modal-body">
-                    <p>Select a time. We confirm by email and call the number you entered.</p>
+                    <p>Select a time. We call the number you entered.</p>
                     <div class="schedule-slots">
                         ${Object.keys(groupedSlots).map(day => `
                             <div class="schedule-day">
@@ -1005,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
             message: `Requested call: ${when}`,
             leadSource: 'website_calculator_call'
         }).then(() => {
-            alert(`We have ${when}. We'll call ${phone} and confirm by email.`);
+            alert(`We have ${when}. We'll call ${phone}.`);
         }).catch(() => {
             alert('We saved the time on this page, but the email did not send. Please call (347) 308-4256.');
         });
