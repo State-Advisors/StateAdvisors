@@ -606,12 +606,11 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="preferredTime">Preferred Time (Optional)</label>
+                    <label for="preferredTime">Preferred Time</label>
                     <input type="text" id="preferredTime" name="preferredTime" placeholder="e.g., 2:00 PM, 6:30 PM">
                 </div>
                 
                 <button type="submit" class="submit-btn">Request Call Back</button>
-                <p class="form-quiet">We use this to call your church back.</p>
             </form>
         </div>
     </section>
@@ -759,13 +758,10 @@
                 })
                 : Promise.resolve(null);
 
-            Promise.all([formspreePromise, crmPromise])
-            .then(([formspreeRes, crmRes]) => {
-                if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) {
-                    finishOk();
-                    return;
-                }
-                throw new Error('Church inquiry was not delivered');
+            Promise.all([formspreePromise.then(formspreeAccepted), crmPromise])
+            .then(([emailed]) => {
+                if (!emailed) throw new Error('Church inquiry was not delivered');
+                finishOk();
             })
             .catch((err) => {
                 console.error(err);
