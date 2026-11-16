@@ -47,16 +47,17 @@ body {
 }
 
 .nav-logo .brand-name {
-    font-size: 2.38rem;
+    font-family: 'Manrope', 'Inter', sans-serif;
+    font-size: 2.2rem;
     font-weight: 800;
-    letter-spacing: 0.008em;
+    letter-spacing: -0.03em;
     line-height: 1;
     white-space: nowrap;
     color: #0f172a;
 }
 
 .nav-logo .brand-strong {
-    color: #60a5fa;
+    color: #3b82f6;
 }
 
 .logo-image {

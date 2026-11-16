@@ -1060,13 +1060,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     };
 
-    // Three arrays. Prices are EIA Electric Power Monthly Table 5.6.A, August 2026:
-    // New York residential 28.65¢/kWh, Ohio residential 19.38¢/kWh,
-    // U.S. average commercial 14.47¢/kWh. The commercial array is not named with a place.
+    // Prices: EIA Table 5.6.A, August 2026, for the two homes
+    // (New York residential 28.65¢/kWh, Ohio residential 19.38¢/kWh).
+    // The commercial array is not named with a place and is valued at 28¢/kWh.
     const MONITOR_SYSTEMS = {
-        li: { lat: 40.79, kw: 13.2, pr: 0.84, rate: 0.2865, tz: 'America/New_York', kind: 'home' },
-        oh: { lat: 39.96, kw: 8.0, pr: 0.84, rate: 0.1938, tz: 'America/New_York', kind: 'home' },
-        com: { lat: 40.0, kw: 60, pr: 0.84, rate: 0.1447, tz: 'America/New_York', kind: 'commercial', loadKw: 28 }
+        li: { lat: 40.79, kw: 13.2, pr: 0.84, rate: 0.2865, tz: 'America/New_York', kind: 'home', profile: 'island' },
+        oh: { lat: 39.96, kw: 9.545, pr: 0.84, rate: 0.1938, tz: 'America/New_York', kind: 'home', profile: 'columbus' },
+        com: { lat: 40.0, kw: 75.255, pr: 0.84, rate: 0.28, tz: 'America/New_York', kind: 'commercial', profile: 'commercial' }
     };
 
     function monitorParts(date, timeZone) {
@@ -1101,14 +1101,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return [0.62, 0.66, 0.70, 0.74, 0.76, 0.78, 0.78, 0.76, 0.74, 0.70, 0.64, 0.60][month - 1];
     }
 
-    // Three repeating day shapes. Close in total energy, different in where the day peaks.
-    function productionShape(hour, cycle) {
+    // Each array has its own three-day cycle, so the homes are not the same curve resized.
+    function productionShape(hour, cycle, profile) {
         const h = hour + 0.5;
-        if (cycle === 0) return h < 11.5 ? 0.96 : 1.05;
-        if (cycle === 1) return (h >= 11 && h < 14) ? 0.72 : 1.04;
-        if (h < 11) return 1.10;
-        if (h < 13) return 0.98;
-        return 0.74;
+        if (profile === 'columbus') {
+            if (cycle === 0) return 0.58 + 0.9 * Math.exp(-Math.pow(h - 12, 2) / 2.6);
+            if (cycle === 1) return h < 12 ? 1.22 : 0.52;
+            return h < 10 ? 0.48 : (h < 15 ? 1.18 : 0.66);
+        }
+        if (profile === 'commercial') {
+            if (cycle === 0) return h < 12.5 ? 1.12 : 0.86;
+            if (cycle === 1) return (h >= 10 && h < 12.5) ? 0.76 : 1.05;
+            return 0.94;
+        }
+        if (cycle === 0) return h < 11.5 ? 0.5 : 1.38;
+        if (cycle === 1) return (h >= 12 && h < 14.5) ? 0.48 : (h < 10 ? 0.72 : 1.12);
+        return h < 11 ? 1.28 : 0.62;
     }
 
     function monitorElevation(latDeg, dayOfYear, hourFraction) {
@@ -1123,25 +1131,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const elevation = monitorElevation(system.lat, monitorDayOfYear(year, month, day), hour + 0.5);
         if (elevation <= 0.05) return 0;
         const cycle = monitorCycle(year, month, day);
-        return system.kw * system.pr * monitorClearness(month) * productionShape(hour, cycle) * Math.sin(elevation);
+        return system.kw * system.pr * monitorClearness(month) * productionShape(hour, cycle, system.profile) * Math.sin(elevation);
     }
 
     function monitorHourUse(system, hour, cycle) {
         const h = hour + 0.5;
-        if (system.kind === 'commercial') {
-            const day = 1 / (1 + Math.exp(-(h - 7.2) * 1.4)) * (1 - 1 / (1 + Math.exp(-(h - 18.2) * 1.3)));
-            const lunch = Math.exp(-Math.pow(h - 12.2, 2) / 1.2);
-            let kw = system.loadKw * (0.18 + 0.85 * day - 0.12 * lunch * day);
-            if (cycle === 1) kw *= h < 12 ? 0.92 : 1.08;
-            if (cycle === 2) kw *= 0.90 + 0.10 * day;
-            return kw;
+        if (system.profile === 'commercial') {
+            let shape = 0.35
+                + 1.35 * Math.exp(-Math.pow(h - 8.0, 2) / 3.2)
+                + 0.45 * Math.exp(-Math.pow(h - 13, 2) / 12)
+                + 1.45 * Math.exp(-Math.pow(h - 17.6, 2) / 4.2);
+            if (cycle === 1) shape *= h < 11 ? 1.15 : 0.88;
+            if (cycle === 2) shape *= h > 15 ? 1.18 : 0.9;
+            return shape;
         }
-        const base = 0.55
-            + 0.9 * Math.exp(-Math.pow(h - 7.5, 2) / 3.4)
-            + 0.35 * Math.exp(-Math.pow(h - 13, 2) / 8)
-            + 1.25 * Math.exp(-Math.pow(h - 18.5, 2) / 4.5);
-        if (cycle === 1) return base * (h < 11 ? 0.82 : h > 16 ? 1.28 : 1);
-        if (cycle === 2) return base * (h > 16 ? 0.72 : (h >= 11 && h < 15) ? 1.30 : 1);
+        if (system.profile === 'columbus') {
+            let base = 0.48
+                + 1.15 * Math.exp(-Math.pow(h - 7.2, 2) / 2.8)
+                + 0.4 * Math.exp(-Math.pow(h - 12.5, 2) / 7)
+                + 1.35 * Math.exp(-Math.pow(h - 17.2, 2) / 3.6);
+            if (cycle === 1) base *= h > 16 ? 1.22 : 0.9;
+            if (cycle === 2) base *= (h > 10 && h < 15) ? 1.25 : 0.95;
+            return base;
+        }
+        let base = 0.6
+            + 0.7 * Math.exp(-Math.pow(h - 8.4, 2) / 4)
+            + 0.25 * Math.exp(-Math.pow(h - 14, 2) / 9)
+            + 1.45 * Math.exp(-Math.pow(h - 19.2, 2) / 4.2);
+        if (cycle === 1) base *= h > 17 ? 1.22 : (h < 10 ? 0.8 : 1);
+        if (cycle === 2) base *= (h > 11 && h < 16) ? 1.28 : (h > 18 ? 0.75 : 1);
         return base;
     }
 
@@ -1192,14 +1210,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const cycle = monitorCycle(now.year, now.month, now.day);
 
         const solarData = [];
-        const useData = [];
+        const rawUse = [];
+        for (let hour = 0; hour < 24; hour++) {
+            solarData.push(monitorHourKwh(system, now.year, now.month, now.day, hour));
+            rawUse.push(monitorHourUse(system, hour, cycle));
+        }
+        let useData = rawUse;
+        if (system.kind === 'commercial') {
+            const solarSum = solarData.reduce((sum, value) => sum + value, 0);
+            const rawSum = rawUse.reduce((sum, value) => sum + value, 0);
+            const scale = rawSum ? (0.86 * solarSum) / rawSum : 0;
+            useData = rawUse.map(value => value * scale);
+        }
         let peak = 1;
         for (let hour = 0; hour < 24; hour++) {
-            const produced = monitorHourKwh(system, now.year, now.month, now.day, hour);
-            const used = monitorHourUse(system, hour, cycle);
-            solarData.push(produced);
-            useData.push(used);
-            peak = Math.max(peak, produced, used);
+            peak = Math.max(peak, solarData[hour], useData[hour]);
         }
         const axisMax = Math.max(4, Math.ceil(peak));
 
