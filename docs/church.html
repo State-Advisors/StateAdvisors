@@ -38,60 +38,6 @@
             z-index: 2;
         }
 
-        .photo-carousel {
-            width: 100%;
-            max-width: 900px;
-            height: 300px;
-            margin: 40px auto;
-            position: relative;
-            overflow: hidden;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .carousel-container {
-            display: flex;
-            width: 300%;
-            height: 100%;
-            animation: slideLeft 15s infinite linear;
-        }
-
-        .carousel-slide {
-            width: 33.333%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .carousel-slide img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-
-        .carousel-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.9);
-            text-align: center;
-        }
-
-        @keyframes slideLeft {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-66.666%); }
-        }
-
-        .carousel-container:hover {
-            animation-play-state: paused;
-        }
-
         /* Mission Beyond Solar Section */
         .mission-beyond-solar {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -485,39 +431,6 @@
         <div class="container">
             <h1>Serving Our Community Together</h1>
             <p class="hero-subtitle">Solar Solutions is proud to partner with local churches to bring sustainable energy solutions and community support to our neighborhoods.</p>
-            
-            <!-- Photo Carousel -->
-            <div class="photo-carousel">
-                <div class="carousel-container">
-                    <div class="carousel-slide">
-                        <div class="carousel-placeholder">
-                            <div>
-                                <i class="fas fa-image" style="font-size: 48px; margin-bottom: 15px;"></i>
-                                <p>Photo 1 Coming Soon</p>
-                                <p style="font-size: 14px; margin-top: 10px;">Gift basket at local church</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="carousel-placeholder">
-                            <div>
-                                <i class="fas fa-image" style="font-size: 48px; margin-bottom: 15px;"></i>
-                                <p>Photo 2 Coming Soon</p>
-                                <p style="font-size: 14px; margin-top: 10px;">Community outreach</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="carousel-placeholder">
-                            <div>
-                                <i class="fas fa-image" style="font-size: 48px; margin-bottom: 15px;"></i>
-                                <p>Photo 3 Coming Soon</p>
-                                <p style="font-size: 14px; margin-top: 10px;">Serving our community</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -667,14 +580,6 @@
                     <p>Phone: (347) 308-4256</p>
                     <p>Email: StateSolarAdvisors@gmail.com</p>
                 </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2024 Solar Solutions. All rights reserved.</p>
@@ -779,24 +684,6 @@
             }
             e.target.value = value;
         });
-
-        // Function to update carousel with actual photos
-        function updateCarouselWithPhotos(photoUrls) {
-            const carouselContainer = document.querySelector('.carousel-container');
-            if (carouselContainer && photoUrls.length >= 3) {
-                carouselContainer.innerHTML = '';
-                
-                photoUrls.forEach((url, index) => {
-                    const slide = document.createElement('div');
-                    slide.className = 'carousel-slide';
-                    slide.innerHTML = `<img src="${url}" alt="Community Photo ${index + 1}">`;
-                    carouselContainer.appendChild(slide);
-                });
-            }
-        }
-
-        // Example usage when you have photos:
-        // updateCarouselWithPhotos(['photo1.jpg', 'photo2.jpg', 'photo3.jpg']);
 
         // Handle call button for desktop vs mobile
         document.addEventListener('DOMContentLoaded', function() {
