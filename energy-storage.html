@@ -37,7 +37,7 @@
     <main class="info-page">
         <div class="container info-wrap">
             <h1>Batteries</h1>
-            <p class="info-lead">A battery stores power from the roof and gives it back when you want it. These are the reasons people add one.</p>
+            <p class="info-lead">A battery stores power from the roof and gives it back when you want it.</p>
 
             <section class="info-block">
                 <h2>Power after the sun is down</h2>
@@ -65,34 +65,58 @@
             </section>
 
             <section class="info-contact" id="explain">
-                <h2>Have an expert explain it</h2>
-                <p>Tell us how to reach you. We'll walk through what a battery would do at your place.</p>
-                <form id="storage-contact-form" action="https://formspree.io/f/xwpqqoqp" method="POST">
-                    <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
-                        <label for="website">Website</label>
-                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                <div id="storage-reach">
+                    <h2>Tell us how to reach you</h2>
+                    <form id="storage-contact-form" action="https://formspree.io/f/xwpqqoqp" method="POST">
+                        <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+                            <label for="website">Website</label>
+                            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-name">Name</label>
+                            <input type="text" id="storage-name" name="name" required autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-email">Email</label>
+                            <input type="email" id="storage-email" name="email" required autocomplete="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-phone">Phone</label>
+                            <input type="tel" id="storage-phone" name="phone" autocomplete="tel">
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-message">What do you want the battery to cover?</label>
+                            <textarea id="storage-message" name="message" rows="4" maxlength="2000" placeholder="Evening use, backup, or both"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Tell us how to reach you</button>
+                    </form>
+                </div>
+                <form id="storage-call-form" action="https://formspree.io/f/xwpqqoqp" method="POST" hidden>
+                    <h2>Choose a call time</h2>
+                    <p>Pick a day and a time. The battery notes stay above.</p>
+                    <div class="quote-phone-ask" id="storage-phone-ask" hidden>
+                        <div class="form-group">
+                            <label for="storage-call-phone">Phone Number</label>
+                            <input type="tel" id="storage-call-phone" name="phone" autocomplete="tel">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="storage-name">Name</label>
-                        <input type="text" id="storage-name" name="name" required autocomplete="name">
+                    <div class="quote-time-grid">
+                        <div class="form-group">
+                            <label for="storage-call-date">Call date</label>
+                            <input type="date" id="storage-call-date" name="call-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="storage-call-time">Call time</label>
+                            <select id="storage-call-time" name="call-time" required>
+                                <option value="">Select</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="storage-email">Email</label>
-                        <input type="email" id="storage-email" name="email" required autocomplete="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="storage-phone">Phone</label>
-                        <input type="tel" id="storage-phone" name="phone" autocomplete="tel">
-                    </div>
-                    <div class="form-group">
-                        <label for="storage-message">What do you want the battery to cover?</label>
-                        <textarea id="storage-message" name="message" rows="4" maxlength="2000" placeholder="Evening use, backup, or both"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Have an expert explain it</button>
+                    <button type="submit" class="btn btn-primary">Send call time</button>
                 </form>
                 <div id="storage-done" hidden>
-                    <h2>We have it</h2>
-                    <p>An expert will explain what a battery would do at your place.</p>
+                    <h2>We have your inquiry</h2>
+                    <p>A team member has received it and will be reaching out very shortly.</p>
                 </div>
             </section>
         </div>

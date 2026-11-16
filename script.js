@@ -1,3 +1,14 @@
+function formspreeAccepted(res) {
+    if (!res || !res.ok) return Promise.resolve(false);
+    const type = res.headers.get('content-type') || '';
+    if (type.indexOf('json') === -1) return Promise.resolve(true);
+    return res.clone().json().then(function (data) {
+        return !data || data.ok !== false;
+    }).catch(function () {
+        return true;
+    });
+}
+
 // Mobile Navigation Toggle
 document.addEventListener('DOMContentLoaded', function() {
     const navToggle = document.querySelector('.nav-toggle');
@@ -215,9 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return null;
                 })
                 : Promise.resolve(null);
-            return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
-                if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
-                throw new Error('Network response was not ok');
+            return Promise.all([formspreePromise.then(formspreeAccepted), crmPromise]).then(([emailed]) => {
+                if (!emailed) throw new Error('Email was not delivered');
             });
         }
 
@@ -835,9 +845,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(crmPayload)
             }).catch(() => null)
             : Promise.resolve(null);
-        return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
-            if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
-            throw new Error('Calculator notice was not delivered');
+        return Promise.all([formspreePromise.then(formspreeAccepted), crmPromise]).then(([emailed]) => {
+            if (!emailed) throw new Error('Calculator notice was not delivered');
         });
     }
 
@@ -873,11 +882,11 @@ document.addEventListener('DOMContentLoaded', function() {
             monthlyBill: leadData.billAmount || '',
             message: 'Phone received from the estimate. A call time may follow.',
             leadSource: 'website_calculator_phone'
+        }).then(() => {
+            showScheduleModal();
         }).catch(() => {
-            console.warn('Calculator phone notice was not delivered');
+            alert('We could not send that. Please try again or call (347) 308-4256.');
         });
-
-        showScheduleModal();
     };
 
     function showScheduleModal() {
@@ -977,12 +986,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         const when = `${dateString} at ${timeString}`;
 
-        leadData.phone = phone;
-        leadData.callScheduled = true;
-        leadData.scheduledTime = selectedTime;
-        localStorage.setItem('solarLeadData', JSON.stringify(leadData));
-        closeScheduleModal();
-
+        const buttons = document.querySelectorAll('#schedule-modal .time-slot');
+        buttons.forEach(button => { button.disabled = true; });
         sendCalculatorNotice({
             _subject: 'Calculator call time',
             form_type: 'calculator_call_time',
@@ -1005,9 +1010,15 @@ document.addEventListener('DOMContentLoaded', function() {
             message: `Requested call: ${when}`,
             leadSource: 'website_calculator_call'
         }).then(() => {
+            leadData.phone = phone;
+            leadData.callScheduled = true;
+            leadData.scheduledTime = selectedTime;
+            localStorage.setItem('solarLeadData', JSON.stringify(leadData));
+            closeScheduleModal();
             alert(`We have ${when}. We'll call ${phone}.`);
         }).catch(() => {
-            alert('We saved the time on this page, but the email did not send. Please call (347) 308-4256.');
+            buttons.forEach(button => { button.disabled = false; });
+            alert('We could not send that time. Please try again or call (347) 308-4256.');
         });
     }
 
@@ -1135,23 +1146,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Three usage shapes per system, one per day in the three-day cycle.
-    // These are different hours of use, not the same curve scaled up or down.
+    // Peaks stay visible. They are broad, and the hours around them move too,
+    // so the day is not a flat block or a single obvious spike.
     function monitorHourUse(system, hour, cycle) {
         const h = hour + 0.5;
         const bell = (center, width, height) => height * Math.exp(-Math.pow(h - center, 2) / width);
+        const ripple = (seed) => 0.06 * Math.sin(h * 1.17 + seed) + 0.035 * Math.sin(h * 0.51 + seed * 1.7);
         if (system.profile === 'commercial') {
-            if (cycle === 0) return (h >= 8 && h < 17) ? 1.6 : 0.12;
-            if (cycle === 1) return (h >= 5 && h < 13) ? 1.7 : (h >= 13 && h < 15 ? 0.4 : 0.1);
-            return (h >= 11 && h < 21) ? 1.55 : 0.14;
+            const blocks = [
+                { start: 8, end: 17, level: 1.55, seed: 0.4 },
+                { start: 6.5, end: 15.5, level: 1.48, seed: 1.8 },
+                { start: 9, end: 18.5, level: 1.58, seed: 3.1 }
+            ];
+            const block = blocks[cycle] || blocks[0];
+            if (h < block.start || h >= block.end) return Math.max(0.08, 0.11 + ripple(block.seed) * 0.35);
+            const wobble = 1 + 0.11 * Math.sin(h * 0.85 + block.seed) + 0.06 * Math.sin(h * 1.7 + block.seed * 2);
+            return block.level * wobble;
         }
+        const lift = (value) => Math.max(0.12, value * 1.7);
         if (system.profile === 'columbus') {
-            if (cycle === 0) return 0.22 + bell(6.4, 1.5, 1.8) + bell(18.4, 2.0, 2.0);
-            if (cycle === 1) return 0.28 + bell(12.6, 7.5, 1.45);
-            return 0.5 + bell(21.2, 2.2, 1.35) + (h < 2 ? 0.7 : 0);
+            if (cycle === 0) return lift(0.48 + bell(7.2, 7, 0.38) + bell(12.8, 6, 0.16) + bell(18.8, 10, 0.5) + ripple(0.7));
+            if (cycle === 1) return lift(0.42 + bell(10.2, 8, 0.32) + bell(15.6, 9, 0.36) + ripple(1.5));
+            return lift(0.44 + bell(8.4, 6, 0.28) + bell(16.4, 7, 0.2) + bell(20.6, 6.5, 0.42) + ripple(2.3));
         }
-        if (cycle === 0) return 0.2 + bell(7.0, 2.0, 0.7) + bell(19.6, 3.2, 2.05);
-        if (cycle === 1) return 0.32 + bell(13.2, 9, 1.25) + bell(18.2, 2.8, 0.45);
-        return 0.18 + bell(6.0, 1.8, 1.9) + bell(22.4, 2.4, 1.55);
+        if (cycle === 0) return lift(0.46 + bell(6.8, 6, 0.32) + bell(12.6, 7, 0.2) + bell(19.4, 9, 0.46) + ripple(0.3));
+        if (cycle === 1) return lift(0.4 + bell(9.6, 6.5, 0.24) + bell(14.2, 10, 0.4) + bell(20.2, 5.5, 0.22) + ripple(1.2));
+        return lift(0.43 + bell(7.6, 5.5, 0.4) + bell(15.4, 8, 0.24) + bell(21.4, 6, 0.3) + ripple(2.6));
     }
 
     function monitorDayKwh(system, year, month, day, throughHour, minuteFraction) {
@@ -1442,9 +1462,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(crmPayload)
             }).catch(() => null)
             : Promise.resolve(null);
-        return Promise.all([formspreePromise, crmPromise]).then(([formspreeRes, crmRes]) => {
-            if ((formspreeRes && formspreeRes.ok) || (crmRes && crmRes.ok)) return;
-            throw new Error('Quote was not delivered');
+        return Promise.all([formspreePromise.then(formspreeAccepted), crmPromise]).then(([emailed]) => {
+            if (!emailed) throw new Error('Email was not delivered');
         });
     }
 
@@ -1486,8 +1505,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (new URLSearchParams(window.location.search).get('interest') === 'ev') {
             const message = document.getElementById('message');
             const evMessage = kind === 'commercial'
-                ? "We're looking into charging at the property. People already come here to work and to visit. Chargers where they park would make this an easier place to choose."
-                : "I'm looking into charging at home. The car is already here every night, and I want it full when I leave in the morning. A charger at the house would make that ordinary.";
+                ? "We're looking into charging at the property. What would it take to plan the chargers with the project, and where would you put them?"
+                : "I'm looking into charging at home. I have one electric vehicle at home and I'd like to wake up to a full charge. I already know where I'd like it to be placed!";
             if (message && !/charg/i.test(message.value)) message.value = evMessage;
         }
 
@@ -1656,7 +1675,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (storageForm) {
+        const reach = document.getElementById('storage-reach');
+        const callForm = document.getElementById('storage-call-form');
         const done = document.getElementById('storage-done');
+        const callDate = document.getElementById('storage-call-date');
+        const callTime = document.getElementById('storage-call-time');
+        const phoneAsk = document.getElementById('storage-phone-ask');
+        const callPhone = document.getElementById('storage-call-phone');
+        let batteryLead = null;
+
+        if (callTime) fillCallTimes(callTime);
+        if (callDate) {
+            const today = nycDateParts(new Date());
+            callDate.min = isoFromParts(addDays(today, 1));
+            callDate.max = isoFromParts(addDays(today, 21));
+        }
+
         storageForm.addEventListener('submit', function (event) {
             event.preventDefault();
             const name = document.getElementById('storage-name');
@@ -1671,30 +1705,96 @@ document.addEventListener('DOMContentLoaded', function () {
             const original = button.textContent;
             button.disabled = true;
             button.textContent = 'Sending...';
-            const note = [message && message.value.trim(), 'Asked for an expert to explain batteries.'].filter(Boolean).join('\n');
-            postLead({
-                _subject: 'Battery explanation request',
-                form_type: 'energy_storage',
+            const note = message && message.value.trim();
+            batteryLead = {
                 name: name.value.trim(),
                 email: email.value.trim(),
                 phone: phone ? phone.value.trim() : '',
                 message: note,
                 website: valueOf('website')
+            };
+            postLead({
+                _subject: 'Battery inquiry',
+                form_type: 'energy_storage',
+                name: batteryLead.name,
+                email: batteryLead.email,
+                phone: batteryLead.phone,
+                message: note,
+                website: batteryLead.website
             }, {
-                website: valueOf('website'),
-                fullName: name.value.trim(),
-                email: email.value.trim(),
-                phone: phone ? phone.value.trim() : '',
+                website: batteryLead.website,
+                fullName: batteryLead.name,
+                email: batteryLead.email,
+                phone: batteryLead.phone,
                 message: note,
                 leadSource: 'website_energy_storage'
             }).then(() => {
-                storageForm.hidden = true;
-                if (done) done.hidden = false;
+                if (reach) reach.hidden = true;
+                if (batteryLead.phone) {
+                    if (phoneAsk) phoneAsk.hidden = true;
+                    if (callPhone) callPhone.required = false;
+                } else if (phoneAsk) {
+                    phoneAsk.hidden = false;
+                    if (callPhone) callPhone.required = true;
+                }
+                if (callForm) {
+                    callForm.hidden = false;
+                    callForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }).catch(() => {
                 showError(storageForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
                 button.disabled = false;
                 button.textContent = original;
             });
         });
+
+        if (callForm) {
+            callForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (!batteryLead) return;
+                const phoneNow = batteryLead.phone || (callPhone ? callPhone.value.trim() : '');
+                const needed = [callDate, callTime];
+                if (!batteryLead.phone) needed.unshift(callPhone);
+                if (!markEmpty(needed)) {
+                    showError(callForm, batteryLead.phone ? 'Choose a date and time for the call.' : 'Add your phone number, then choose a date and time.');
+                    return;
+                }
+                if (weekdayOf(callDate.value) === 0) {
+                    callDate.style.borderColor = '#ef4444';
+                    showError(callForm, 'Choose a Monday through Saturday.');
+                    return;
+                }
+                const when = `${callDate.value} at ${callTime.value} (Eastern)`;
+                const button = callForm.querySelector('button[type="submit"]');
+                const original = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Sending...';
+                const note = [batteryLead.message, `Requested call: ${when}`].filter(Boolean).join('\n');
+                postLead({
+                    _subject: 'Commercial battery call time',
+                    form_type: 'energy_storage_call',
+                    name: batteryLead.name,
+                    email: batteryLead.email,
+                    phone: phoneNow,
+                    message: batteryLead.message,
+                    requested_call: when,
+                    website: batteryLead.website
+                }, {
+                    website: batteryLead.website,
+                    fullName: batteryLead.name,
+                    email: batteryLead.email,
+                    phone: phoneNow,
+                    message: note,
+                    leadSource: 'website_energy_storage_call'
+                }).then(() => {
+                    callForm.hidden = true;
+                    if (done) done.hidden = false;
+                }).catch(() => {
+                    showError(callForm, 'Sorry, we could not send that. Please try again or call (347) 308-4256.');
+                    button.disabled = false;
+                    button.textContent = original;
+                });
+            });
+        }
     }
 });
