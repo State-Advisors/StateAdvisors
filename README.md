@@ -1,4 +1,4 @@
-# StateAdvisors Solar - Landing Page
+# Solar Solutions - Landing Page
 
 A modern, responsive solar energy landing page focused on commercial solar solutions with residential options. Built with HTML, CSS, and JavaScript, designed to capture leads through Formspree integration.
 
@@ -35,7 +35,7 @@ A modern, responsive solar energy landing page focused on commercial solar solut
 ### 2. Customization
 
 #### Update Company Information
-- Replace "StateAdvisors Solar" with your company name
+- The public name on the site is Solar Solutions. Leave the email address and the portal URL as they are.
 - Update contact information in the footer
 - Modify phone numbers and email addresses
 - Update the service area in the footer
@@ -145,6 +145,12 @@ For questions or issues:
 1. Check the Formspree documentation for form setup
 2. Review browser console for JavaScript errors
 3. Validate HTML and CSS using online validators
+
+## Customer portal (intent only)
+
+Not built. Do not start it until it is asked for.
+
+When a customer submits an application, ask them to set a password so they can sign in. After a call is scheduled, that login is how they stay in contact with us: messages, documents, and where the project stands. It is a customer-facing portal, separate from the employee login at https://app.statesolaradvisors.com. The public process page names this portal. There is no login for it yet.
 
 ## License
 

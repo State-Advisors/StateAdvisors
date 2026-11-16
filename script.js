@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, observerOptions);
 
     // Observe elements for animation
-    const animatedElements = document.querySelectorAll('.benefit-card, .solution-card, .step');
+    const animatedElements = document.querySelectorAll('.solution-card');
     animatedElements.forEach(el => {
         el.style.opacity = '0';
         el.style.transform = 'translateY(30px)';
@@ -1134,33 +1134,24 @@ document.addEventListener('DOMContentLoaded', function() {
         return system.kw * system.pr * monitorClearness(month) * productionShape(hour, cycle, system.profile) * Math.sin(elevation);
     }
 
+    // Three usage shapes per system, one per day in the three-day cycle.
+    // These are different hours of use, not the same curve scaled up or down.
     function monitorHourUse(system, hour, cycle) {
         const h = hour + 0.5;
+        const bell = (center, width, height) => height * Math.exp(-Math.pow(h - center, 2) / width);
         if (system.profile === 'commercial') {
-            let shape = 0.35
-                + 1.35 * Math.exp(-Math.pow(h - 8.0, 2) / 3.2)
-                + 0.45 * Math.exp(-Math.pow(h - 13, 2) / 12)
-                + 1.45 * Math.exp(-Math.pow(h - 17.6, 2) / 4.2);
-            if (cycle === 1) shape *= h < 11 ? 1.15 : 0.88;
-            if (cycle === 2) shape *= h > 15 ? 1.18 : 0.9;
-            return shape;
+            if (cycle === 0) return (h >= 8 && h < 17) ? 1.6 : 0.12;
+            if (cycle === 1) return (h >= 5 && h < 13) ? 1.7 : (h >= 13 && h < 15 ? 0.4 : 0.1);
+            return (h >= 11 && h < 21) ? 1.55 : 0.14;
         }
         if (system.profile === 'columbus') {
-            let base = 0.48
-                + 1.15 * Math.exp(-Math.pow(h - 7.2, 2) / 2.8)
-                + 0.4 * Math.exp(-Math.pow(h - 12.5, 2) / 7)
-                + 1.35 * Math.exp(-Math.pow(h - 17.2, 2) / 3.6);
-            if (cycle === 1) base *= h > 16 ? 1.22 : 0.9;
-            if (cycle === 2) base *= (h > 10 && h < 15) ? 1.25 : 0.95;
-            return base;
+            if (cycle === 0) return 0.22 + bell(6.4, 1.5, 1.8) + bell(18.4, 2.0, 2.0);
+            if (cycle === 1) return 0.28 + bell(12.6, 7.5, 1.45);
+            return 0.5 + bell(21.2, 2.2, 1.35) + (h < 2 ? 0.7 : 0);
         }
-        let base = 0.6
-            + 0.7 * Math.exp(-Math.pow(h - 8.4, 2) / 4)
-            + 0.25 * Math.exp(-Math.pow(h - 14, 2) / 9)
-            + 1.45 * Math.exp(-Math.pow(h - 19.2, 2) / 4.2);
-        if (cycle === 1) base *= h > 17 ? 1.22 : (h < 10 ? 0.8 : 1);
-        if (cycle === 2) base *= (h > 11 && h < 16) ? 1.28 : (h > 18 ? 0.75 : 1);
-        return base;
+        if (cycle === 0) return 0.2 + bell(7.0, 2.0, 0.7) + bell(19.6, 3.2, 2.05);
+        if (cycle === 1) return 0.32 + bell(13.2, 9, 1.25) + bell(18.2, 2.8, 0.45);
+        return 0.18 + bell(6.0, 1.8, 1.9) + bell(22.4, 2.4, 1.55);
     }
 
     function monitorDayKwh(system, year, month, day, throughHour, minuteFraction) {
