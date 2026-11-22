@@ -39,6 +39,13 @@
             z-index: 2;
         }
 
+        .church-hero h1,
+        .church-hero .hero-subtitle {
+            max-width: 920px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         /* Mission Beyond Solar Section */
         .mission-beyond-solar {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -247,7 +254,7 @@
 
         .outreach-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
             gap: 40px;
             margin-top: 50px;
         }
@@ -396,10 +403,37 @@
             .time-options {
                 flex-direction: column;
             }
+
+            .time-option,
+            .time-option label {
+                min-width: 0;
+            }
             
             .contact-form {
-                margin: 0 20px;
+                margin: 0 auto;
+                width: 100%;
+                max-width: 600px;
                 padding: 30px 20px;
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .mission-content {
+                max-width: 960px;
+            }
+
+            .contact-form {
+                max-width: 720px;
+            }
+        }
+
+        @media (min-width: 1800px) {
+            .mission-content {
+                max-width: 1080px;
+            }
+
+            .contact-form {
+                max-width: 840px;
             }
         }
     </style>
