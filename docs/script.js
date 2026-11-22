@@ -15,32 +15,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const navMenu = document.querySelector('.nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
 
-    // Toggle mobile menu
-    navToggle.addEventListener('click', function() {
-        navMenu.classList.toggle('active');
-        
-        // Animate hamburger menu
-        const bars = document.querySelectorAll('.bar');
-        bars.forEach(bar => bar.classList.toggle('active'));
-    });
+    function setMenuOpen(open) {
+        if (!navMenu || !navToggle) return;
+        navMenu.classList.toggle('active', open);
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        document.querySelectorAll('.bar').forEach(bar => bar.classList.toggle('active', open));
+    }
 
-    // Close mobile menu when clicking on a link
-    navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            navMenu.classList.remove('active');
-            const bars = document.querySelectorAll('.bar');
-            bars.forEach(bar => bar.classList.remove('active'));
+    if (navToggle && navMenu) {
+        navToggle.setAttribute('role', 'button');
+        navToggle.setAttribute('tabindex', '0');
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.setAttribute('aria-label', 'Menu');
+
+        navToggle.addEventListener('click', function() {
+            setMenuOpen(!navMenu.classList.contains('active'));
         });
-    });
 
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-            navMenu.classList.remove('active');
-            const bars = document.querySelectorAll('.bar');
-            bars.forEach(bar => bar.classList.remove('active'));
-        }
-    });
+        navToggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setMenuOpen(!navMenu.classList.contains('active'));
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                setMenuOpen(false);
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') setMenuOpen(false);
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 1120) setMenuOpen(false);
+        });
+    }
 
     // Navbar background on scroll
     window.addEventListener('scroll', function() {
@@ -1204,8 +1222,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const canvas = slide.querySelector('.production-chart');
         if (!canvas) return;
         const parentWidth = (canvas.parentElement && canvas.parentElement.clientWidth) || 800;
-        const cssWidth = Math.max(280, parentWidth);
-        const cssHeight = Math.max(220, Math.round(cssWidth * 0.38));
+        const cssWidth = Math.max(160, parentWidth);
+        const cssHeight = Math.max(180, Math.round(cssWidth * 0.38));
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.style.width = '100%';
         canvas.style.height = cssHeight + 'px';
